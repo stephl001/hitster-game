@@ -12,7 +12,8 @@
       "Bash(npx tailwindcss init:*)",
       "Bash(dotnet build)",
       "Bash(npm run build)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git rev-parse:*)"
     ],
     "deny": [],
     "ask": []

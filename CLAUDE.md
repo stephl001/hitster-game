@@ -235,3 +235,4 @@ library/API documentation. This means you should automatically use the Context7 
 tools to resolve library id and get library docs without me having to explicitly ask.
 - Azure CLI is installed on this machine so you can call cli commands if you need to
 - Always create a new git branch when proceeding with some implementation if the current branch is main
+- Always rebase a local branch to main

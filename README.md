@@ -1,10 +1,10 @@
-# Hitster Game - Online Multiplayer
+# Songster Game - Online Multiplayer
 
-An online multiplayer implementation of the popular Hitster music game, built with Vue.js 3 and ASP.NET Core 9.
+An online multiplayer implementation of the popular music timeline game, built with Vue.js 3 and ASP.NET Core 9.
 
 ## 🎵 About the Game
 
-Hitster is a music timeline game where players listen to songs and place them in chronological order on their personal timeline. Players must guess if a song was released before, after, or between the songs already on their timeline. The first player to correctly place 10 songs wins!
+Songster is a music timeline game where players listen to songs and place them in chronological order on their personal timeline. Players must guess if a song was released before, after, or between the songs already on their timeline. The first player to correctly place 10 songs wins!
 
 ## 🏗️ Architecture
 
@@ -110,10 +110,10 @@ Hitster is a music timeline game where players listen to songs and place them in
 ## 📁 Project Structure
 
 ```
-hitster-game/
+songster-game/
 ├── README.md
 ├── backend/                          # ASP.NET Core 9 API
-│   ├── HitsterGame.Api/
+│   ├── SongsterGame.Api/
 │   │   ├── Program.cs
 │   │   ├── appsettings.json
 │   │   ├── Hubs/
@@ -337,7 +337,7 @@ This project is designed to learn Vue.js 3 while building a complete, production
 
 ## 📝 License
 
-This is a learning project. The Hitster game concept belongs to its original creators.
+This is a learning project inspired by music timeline games.
 
 ---
 

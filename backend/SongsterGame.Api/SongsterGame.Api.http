@@ -1,0 +1,6 @@
+@SongsterGame.Api_HostAddress = http://localhost:5023
+
+GET {{SongsterGame.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

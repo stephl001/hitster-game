@@ -5,7 +5,14 @@
       "Bash(then echo \"backend exists\")",
       "Bash(fi)",
       "Bash(if [ -d \"frontend\" ])",
-      "Bash(then echo \"frontend exists\")"
+      "Bash(then echo \"frontend exists\")",
+      "Bash(git checkout:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npx tailwindcss init:*)",
+      "Bash(dotnet build)",
+      "Bash(npm run build)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

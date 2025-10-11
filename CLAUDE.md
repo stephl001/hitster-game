@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an online multiplayer implementation of the Hitster music game - a music timeline game where players listen to songs and place them chronologically on their personal timeline. The first player to correctly place 10 songs wins.
+This is an online multiplayer implementation of the Songster music game - a music timeline game where players listen to songs and place them chronologically on their personal timeline. The first player to correctly place 10 songs wins.
+
+**STATUS: Skeleton implementation complete!** See [SKELETON_COMPLETE.md](./SKELETON_COMPLETE.md) for details.
 
 **Tech Stack:**
 - Frontend: Vue.js 3 (Composition API) + Vite + Pinia + TailwindCSS
@@ -27,7 +29,7 @@ npm run lint            # Lint code
 
 ### Backend (.NET)
 ```bash
-cd backend/HitsterGame.Api
+cd backend/SongsterGame.Api
 dotnet restore          # Restore dependencies
 dotnet run              # Run API (usually https://localhost:7000)
 dotnet build            # Build project
@@ -83,7 +85,7 @@ Player
 ├── ConnectionId (SignalR)
 ├── Nickname
 ├── Timeline (List<MusicCard>)
-└── HitsterTokens (int)
+└── SongsterTokens (int)
 
 MusicCard
 ├── SpotifyId
@@ -99,7 +101,7 @@ When a player places a card on their timeline:
 2. Validate: `yearBefore < cardYear < yearAfter`
 3. If valid: add to timeline, check win condition (10 cards)
 4. If invalid: discard card, next turn
-5. Optional: Correct artist/title guess earns Hitster token
+5. Optional: Correct artist/title guess earns Songster token
 
 ### Spotify Integration Flow
 1. Host initiates OAuth 2.0 flow (Implicit Grant or Auth Code)
@@ -150,7 +152,7 @@ Expected methods:
 - `JoinGame(gameCode, nickname)` → Returns player list
 - `StartGame()` → Host only, initializes music deck
 - `PlaceCard(position)` → Validates and updates timeline
-- `GuessMetadata(artist, title)` → Optional Hitster token logic
+- `GuessMetadata(artist, title)` → Optional Songster token logic
 - `LeaveGame()` → Cleanup player, potentially end game
 
 ### SignalR Client Events (Frontend)

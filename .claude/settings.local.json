@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(if [ -d \"backend\" ])",
+      "Bash(then echo \"backend exists\")",
+      "Bash(fi)",
+      "Bash(if [ -d \"frontend\" ])",
+      "Bash(then echo \"frontend exists\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

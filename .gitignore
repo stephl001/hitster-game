@@ -1,0 +1,102 @@
+# General
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+*~
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.code-workspace
+
+# Frontend (Node.js / Vue.js)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/.vite/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/coverage/
+frontend/.nyc_output/
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/.pnpm-debug.log*
+
+# Backend (.NET)
+backend/**/*.user
+backend/**/*.suo
+backend/**/bin/
+backend/**/obj/
+backend/**/.vs/
+backend/**/appsettings.Development.json
+backend/**/appsettings.Local.json
+backend/**/*.DotSettings.user
+backend/**/.vscode/
+
+# Build outputs
+**/[Bb]in/
+**/[Oo]bj/
+**/[Dd]ebug/
+**/[Rr]elease/
+**/x64/
+**/x86/
+**/[Ww][Ii][Nn]32/
+**/[Aa][Rr][Mm]/
+**/[Aa][Rr][Mm]64/
+**/bld/
+**/[Bb]uild/
+**/publish/
+
+# Test results
+**/TestResults/
+**/*.trx
+**/*.coverage
+**/*.coveragexml
+
+# NuGet
+**/*.nupkg
+**/*.snupkg
+**/packages/
+backend/**/project.lock.json
+backend/**/project.fragment.lock.json
+backend/**/artifacts/
+
+# Azure and secrets
+*.publishsettings
+*.PublishSettings
+*.azurePubxml
+*.pubxml
+*.user
+*.azurewebsites.net
+local.settings.json
+.env
+.env.local
+
+# Bicep/ARM outputs
+infra/**/*.json.backup
+infra/**/outputs/
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+*.bak

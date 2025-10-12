@@ -40,4 +40,5 @@ output staticWebAppId string = staticWebApp.id
 output staticWebAppName string = staticWebApp.name
 output staticWebAppDefaultHostname string = staticWebApp.properties.defaultHostname
 output staticWebAppUrl string = 'https://${staticWebApp.properties.defaultHostname}'
-output staticWebAppDeploymentToken string = staticWebApp.listSecrets().properties.apiKey
+// Note: Deployment token should be retrieved separately using Azure CLI for security
+// az staticwebapp secrets list --name <name> --query properties.apiKey -o tsv

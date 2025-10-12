@@ -1,0 +1,60 @@
+name: Deploy Azure Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-infrastructure:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Bicep template
+        uses: azure/arm-deploy@v2
+        id: deploy
+        with:
+          scope: resourcegroup
+          resourceGroupName: rg-songster-${{ inputs.environment }}
+          template: ./infrastructure/bicep/main.bicep
+          parameters: ./infrastructure/bicep/parameters/${{ inputs.environment }}.parameters.json
+          deploymentName: songster-${{ inputs.environment }}-${{ github.run_number }}
+          failOnStdErr: false
+
+      - name: Display deployment outputs
+        run: |
+          echo "### Deployment Outputs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend API:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Name: ${{ steps.deploy.outputs.appServiceName }}" >> $GITHUB_STEP_SUMMARY
+          echo "- URL: ${{ steps.deploy.outputs.appServiceUrl }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Frontend:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Name: ${{ steps.deploy.outputs.staticWebAppName }}" >> $GITHUB_STEP_SUMMARY
+          echo "- URL: ${{ steps.deploy.outputs.staticWebAppUrl }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Key Vault:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Name: ${{ steps.deploy.outputs.keyVaultName }}" >> $GITHUB_STEP_SUMMARY

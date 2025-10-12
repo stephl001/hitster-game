@@ -1,13 +1,14 @@
 name: Deploy Backend API
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend-deploy.yml'
+  # Disabled auto-deploy until infrastructure is set up
+  # push:
+  #   branches:
+  #     - main
+  #     - dev
+  #   paths:
+  #     - 'backend/**'
+  #     - '.github/workflows/backend-deploy.yml'
   workflow_dispatch:
     inputs:
       environment:

@@ -13,7 +13,10 @@
       "Bash(dotnet build)",
       "Bash(npm run build)",
       "Bash(git add:*)",
-      "Bash(git rev-parse:*)"
+      "Bash(git rev-parse:*)",
+      "Bash(az account:*)",
+      "Bash(az deployment group list:*)",
+      "Bash(az group show:*)"
     ],
     "deny": [],
     "ask": []

@@ -52,7 +52,7 @@ module monitoring './modules/monitoring.bicep' = {
   }
 }
 
-// Deploy App Service (Backend API)
+// Deploy App Service (Backend API) - Initial deployment without Key Vault URI
 module appService './modules/app-service.bicep' = {
   name: 'app-service-deployment'
   params: {
@@ -61,7 +61,7 @@ module appService './modules/app-service.bicep' = {
     tags: commonTags
     appServicePlanSku: appServicePlanSku
     applicationInsightsConnectionString: monitoring.outputs.applicationInsightsConnectionString
-    keyVaultUri: keyVault.outputs.keyVaultUri
+    keyVaultUri: '' // Will be updated after Key Vault is created
     frontendUrl: frontendUrl
     spotifyRedirectUri: spotifyRedirectUri
   }
@@ -76,6 +76,27 @@ module keyVault './modules/key-vault.bicep' = {
     tags: commonTags
     appServicePrincipalId: appService.outputs.appServicePrincipalId
   }
+  dependsOn: [
+    appService
+  ]
+}
+
+// Update App Service with Key Vault URI
+module appServiceUpdate './modules/app-service.bicep' = {
+  name: 'app-service-update-deployment'
+  params: {
+    location: location
+    environment: environment
+    tags: commonTags
+    appServicePlanSku: appServicePlanSku
+    applicationInsightsConnectionString: monitoring.outputs.applicationInsightsConnectionString
+    keyVaultUri: keyVault.outputs.keyVaultUri
+    frontendUrl: frontendUrl
+    spotifyRedirectUri: spotifyRedirectUri
+  }
+  dependsOn: [
+    keyVault
+  ]
 }
 
 // Deploy Static Web App (Frontend)
@@ -110,4 +131,3 @@ output keyVaultUri string = keyVault.outputs.keyVaultUri
 // Frontend outputs
 output staticWebAppName string = staticWebApp.outputs.staticWebAppName
 output staticWebAppUrl string = staticWebApp.outputs.staticWebAppUrl
-output staticWebAppDeploymentToken string = staticWebApp.outputs.staticWebAppDeploymentToken

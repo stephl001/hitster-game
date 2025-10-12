@@ -15,8 +15,8 @@ param appServicePlanSku string = 'F1'
 @description('Application Insights Connection String')
 param applicationInsightsConnectionString string
 
-@description('Key Vault URI for secret references')
-param keyVaultUri string
+@description('Key Vault URI for secret references (optional, can be empty for initial deployment)')
+param keyVaultUri string = ''
 
 @description('Frontend URL for CORS configuration')
 param frontendUrl string
@@ -86,11 +86,11 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
         }
         {
           name: 'Spotify__ClientId'
-          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/SpotifyClientId/)'
+          value: keyVaultUri != '' ? '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/SpotifyClientId/)' : 'PLACEHOLDER'
         }
         {
           name: 'Spotify__ClientSecret'
-          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/SpotifyClientSecret/)'
+          value: keyVaultUri != '' ? '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/SpotifyClientSecret/)' : 'PLACEHOLDER'
         }
         {
           name: 'Spotify__RedirectUri'

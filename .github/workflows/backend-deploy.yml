@@ -58,7 +58,7 @@ jobs:
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name: app-songster-${{ github.event.inputs.environment || 'dev' }}
+          app-name: app-songster-api-${{ github.event.inputs.environment || 'dev' }}
           package: ./backend/SongsterGame.Api/publish
 
       - name: Deployment summary

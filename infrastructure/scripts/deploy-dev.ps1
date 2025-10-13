@@ -59,6 +59,34 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "✓ Bicep template is valid" -ForegroundColor Green
 Write-Host ""
 
+# Purge soft-deleted Key Vaults
+Write-Host "Checking for soft-deleted Key Vaults..." -ForegroundColor Yellow
+try {
+    $DeletedVaults = az keyvault list-deleted --query "[?starts_with(name, 'kv-song-$Environment-')]" -o json | ConvertFrom-Json
+
+    if ($DeletedVaults -and $DeletedVaults.Count -gt 0) {
+        Write-Host "Found $($DeletedVaults.Count) soft-deleted Key Vault(s) to purge:" -ForegroundColor Yellow
+
+        foreach ($vault in $DeletedVaults) {
+            $vaultName = $vault.name
+            $vaultLocation = $vault.properties.location
+            Write-Host "  - Purging: $vaultName in $vaultLocation" -ForegroundColor Cyan
+
+            az keyvault purge --name $vaultName --location $vaultLocation --no-wait 2>&1 | Out-Null
+        }
+
+        Write-Host "Key Vault purge initiated (may take a few moments to complete)" -ForegroundColor Green
+        Write-Host "Waiting 10 seconds..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 10
+    } else {
+        Write-Host "No soft-deleted Key Vaults found" -ForegroundColor Green
+    }
+} catch {
+    Write-Host "Warning: Could not check for soft-deleted Key Vaults: $($_.Exception.Message)" -ForegroundColor Yellow
+    Write-Host "Continuing with deployment..." -ForegroundColor Yellow
+}
+Write-Host ""
+
 # Deploy infrastructure
 Write-Host "Deploying infrastructure (this may take 5-10 minutes)..." -ForegroundColor Yellow
 $Timestamp = Get-Date -Format "yyyyMMdd-HHmmss"

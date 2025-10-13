@@ -30,6 +30,30 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Purge soft-deleted Key Vaults
+        continue-on-error: true
+        run: |
+          echo "Checking for soft-deleted Key Vaults matching pattern: kv-song-${{ inputs.environment }}-*"
+
+          # List all soft-deleted Key Vaults
+          DELETED_VAULTS=$(az keyvault list-deleted --query "[?starts_with(name, 'kv-song-${{ inputs.environment }}-')].{name:name, location:properties.location}" -o json)
+
+          if [ "$DELETED_VAULTS" != "[]" ]; then
+            echo "Found soft-deleted Key Vaults to purge:"
+            echo "$DELETED_VAULTS" | jq -r '.[] | "  - \(.name) in \(.location)"'
+
+            # Purge each soft-deleted Key Vault
+            echo "$DELETED_VAULTS" | jq -r '.[] | "\(.name) \(.location)"' | while read name location; do
+              echo "Purging Key Vault: $name in $location"
+              az keyvault purge --name "$name" --location "$location" --no-wait
+            done
+
+            echo "Key Vault purge initiated (may take a few moments to complete)"
+            sleep 10
+          else
+            echo "No soft-deleted Key Vaults found"
+          fi
+
       - name: Deploy Bicep template
         uses: azure/arm-deploy@v2
         id: deploy

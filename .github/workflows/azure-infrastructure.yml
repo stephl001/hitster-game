@@ -67,7 +67,7 @@ jobs:
           failOnStdErr: false
 
       - name: Configure Static Web App deployment token
-        if: secrets.GH_PAT != ''
+        if: ${{ secrets.GH_PAT != '' }}
         run: |
           echo "Retrieving Static Web App deployment token..."
           DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
@@ -83,7 +83,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_PAT }}
 
       - name: Manual secret configuration required
-        if: secrets.GH_PAT == ''
+        if: ${{ secrets.GH_PAT == '' }}
         run: |
           echo "⚠️ GH_PAT secret not configured - skipping automatic secret setup"
           echo ""

@@ -12,10 +12,13 @@ param tags object = {}
 @description('Static Web App SKU (Free or Standard)')
 param sku string = 'Free'
 
-// Static Web App
+// Static Web App (must use a supported region)
+// Static Web Apps are only available in: westus2, centralus, eastus2, westeurope, eastasia
+var staticWebAppLocation = location == 'eastus' ? 'eastus2' : (location == 'canadacentral' ? 'centralus' : location)
+
 resource staticWebApp 'Microsoft.Web/staticSites@2023-01-01' = {
   name: 'stapp-songster-web-${environment}'
-  location: location
+  location: staticWebAppLocation
   tags: tags
   sku: {
     name: sku

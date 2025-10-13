@@ -9,18 +9,16 @@ param environment string
 @description('Tags to apply to resources')
 param tags object = {}
 
-@description('Principal ID of the App Service to grant access to Key Vault')
-param appServicePrincipalId string
-
 @description('Tenant ID for Key Vault access policies')
 param tenantId string = subscription().tenantId
 
-// Generate a unique suffix for Key Vault name (must be globally unique)
-var uniqueSuffix = uniqueString(resourceGroup().id)
+// Generate a unique suffix for Key Vault name (must be globally unique and max 24 chars)
+// uniqueString returns 13 chars, so we take first 8 chars to ensure name fits in 24 char limit
+var uniqueSuffix = substring(uniqueString(resourceGroup().id), 0, 8)
 
-// Key Vault
+// Key Vault (name must be 3-24 alphanumeric chars, begin with letter, end with letter/digit, no consecutive hyphens)
 resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
-  name: 'kv-songster-${environment}-${uniqueSuffix}'
+  name: 'kv-song-${environment}-${uniqueSuffix}'
   location: location
   tags: tags
   properties: {
@@ -31,18 +29,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-02-01' = {
     enableSoftDelete: true
     softDeleteRetentionInDays: 7
     enableRbacAuthorization: false
-    accessPolicies: [
-      {
-        tenantId: tenantId
-        objectId: appServicePrincipalId
-        permissions: {
-          secrets: [
-            'get'
-            'list'
-          ]
-        }
-      }
-    ]
+    accessPolicies: [] // Access policies will be added via separate module
     sku: {
       name: 'standard'
       family: 'A'

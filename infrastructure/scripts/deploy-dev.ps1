@@ -3,7 +3,7 @@
 
 # Configuration
 $ResourceGroup = "rg-songster-dev"
-$Location = "eastus"
+$Location = "canadacentral"
 $Environment = "dev"
 $BicepFile = "..\bicep\main.bicep"
 $ParametersFile = "..\bicep\parameters\dev.parameters.json"
@@ -46,25 +46,114 @@ az group create `
 Write-Host "✓ Resource group ready" -ForegroundColor Green
 Write-Host ""
 
-# Validate Bicep template
-Write-Host "Validating Bicep template..." -ForegroundColor Yellow
-az deployment group validate `
-    --resource-group $ResourceGroup `
-    --template-file $BicepFile `
-    --parameters $ParametersFile `
-    --output none
-Write-Host "✓ Bicep template validation passed" -ForegroundColor Green
+# Build Bicep template (validates syntax)
+Write-Host "Building and validating Bicep template..." -ForegroundColor Yellow
+$BicepBuildResult = az bicep build --file $BicepFile 2>&1
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "✗ Bicep build failed:" -ForegroundColor Red
+    Write-Host $BicepBuildResult -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "✓ Bicep template is valid" -ForegroundColor Green
 Write-Host ""
 
 # Deploy infrastructure
 Write-Host "Deploying infrastructure (this may take 5-10 minutes)..." -ForegroundColor Yellow
 $Timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
-$DeploymentOutput = az deployment group create `
-    --resource-group $ResourceGroup `
-    --template-file $BicepFile `
-    --parameters $ParametersFile `
-    --name "songster-$Environment-$Timestamp" `
-    --output json | ConvertFrom-Json
+$DeploymentName = "songster-$Environment-$Timestamp"
+
+Write-Host "Deployment details:" -ForegroundColor Cyan
+Write-Host "  Resource Group: $ResourceGroup" -ForegroundColor Cyan
+Write-Host "  Template File: $BicepFile" -ForegroundColor Cyan
+Write-Host "  Parameters File: $ParametersFile" -ForegroundColor Cyan
+Write-Host "  Deployment Name: $DeploymentName" -ForegroundColor Cyan
+Write-Host ""
+
+# Save deployment output to file for debugging
+$DeploymentLogFile = "..\..\\.azure\deployment-log-$Timestamp.txt"
+Write-Host "Deployment output will be saved to: $DeploymentLogFile" -ForegroundColor Cyan
+Write-Host ""
+
+try {
+    # Run deployment and capture output to file
+    Write-Host "Running deployment command..." -ForegroundColor Cyan
+
+    # Use Start-Process to properly capture output and error streams
+    $TempOutputFile = [System.IO.Path]::GetTempFileName()
+    $TempErrorFile = [System.IO.Path]::GetTempFileName()
+
+    $ProcessArgs = @(
+        "deployment", "group", "create",
+        "--resource-group", $ResourceGroup,
+        "--template-file", $BicepFile,
+        "--parameters", $ParametersFile,
+        "--name", $DeploymentName,
+        "--output", "json"
+    )
+
+    $Process = Start-Process -FilePath "az" -ArgumentList $ProcessArgs `
+        -RedirectStandardOutput $TempOutputFile `
+        -RedirectStandardError $TempErrorFile `
+        -NoNewWindow -Wait -PassThru
+
+    $ExitCode = $Process.ExitCode
+    $StdOut = Get-Content $TempOutputFile -Raw
+    $StdErr = Get-Content $TempErrorFile -Raw
+
+    # Save full output to log
+    @"
+Exit Code: $ExitCode
+
+=== STDOUT ===
+$StdOut
+
+=== STDERR ===
+$StdErr
+"@ | Set-Content $DeploymentLogFile
+
+    # Clean up temp files
+    Remove-Item $TempOutputFile, $TempErrorFile -ErrorAction SilentlyContinue
+
+    Write-Host "Deployment command completed with exit code: $ExitCode" -ForegroundColor $(if ($ExitCode -eq 0) { "Green" } else { "Red" })
+
+    if ($ExitCode -ne 0) {
+        Write-Host ""
+        Write-Host "Error output:" -ForegroundColor Red
+        Write-Host $StdErr -ForegroundColor Red
+        throw "Deployment command failed with exit code $ExitCode"
+    }
+
+    # Parse JSON output
+    if ($StdOut) {
+        $DeploymentOutput = $StdOut | ConvertFrom-Json
+    } else {
+        throw "No deployment output received"
+    }
+}
+catch {
+    Write-Host "✗ Infrastructure deployment failed:" -ForegroundColor Red
+    Write-Host $_.Exception.Message -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Deployment log saved to: $DeploymentLogFile" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Checking deployment operation details..." -ForegroundColor Yellow
+
+    # Try to get detailed error information
+    $DeploymentExists = az deployment group show --resource-group $ResourceGroup --name $DeploymentName 2>$null
+    if ($DeploymentExists) {
+        az deployment operation group list `
+            --resource-group $ResourceGroup `
+            --name $DeploymentName `
+            --query "[?properties.provisioningState=='Failed'].{Resource:properties.targetResource.resourceName, Error:properties.statusMessage.error}" `
+            --output json | ConvertFrom-Json | Format-List
+    } else {
+        Write-Host "Deployment not found in Azure. Check the error output above for validation errors." -ForegroundColor Yellow
+    }
+
+    exit 1
+}
 
 Write-Host "✓ Infrastructure deployment completed" -ForegroundColor Green
 Write-Host ""
@@ -79,7 +168,10 @@ $AppServiceUrl = $DeploymentOutput.properties.outputs.appServiceUrl.value
 $KeyVaultName = $DeploymentOutput.properties.outputs.keyVaultName.value
 $StaticWebAppName = $DeploymentOutput.properties.outputs.staticWebAppName.value
 $StaticWebAppUrl = $DeploymentOutput.properties.outputs.staticWebAppUrl.value
-$StaticWebAppToken = $DeploymentOutput.properties.outputs.staticWebAppDeploymentToken.value
+
+# Retrieve Static Web App deployment token separately (not available via Bicep output for security)
+Write-Host "Retrieving Static Web App deployment token..." -ForegroundColor Yellow
+$StaticWebAppToken = az staticwebapp secrets list --name $StaticWebAppName --query "properties.apiKey" -o tsv
 
 Write-Host "Backend API:"
 Write-Host "  Name: $AppServiceName"

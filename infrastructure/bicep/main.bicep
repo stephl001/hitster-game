@@ -52,35 +52,19 @@ module monitoring './modules/monitoring.bicep' = {
   }
 }
 
-// Deploy App Service (Backend API) - Initial deployment without Key Vault URI
-module appService './modules/app-service.bicep' = {
-  name: 'app-service-deployment'
-  params: {
-    location: location
-    environment: environment
-    tags: commonTags
-    appServicePlanSku: appServicePlanSku
-    applicationInsightsConnectionString: monitoring.outputs.applicationInsightsConnectionString
-    keyVaultUri: '' // Will be updated after Key Vault is created
-    frontendUrl: frontendUrl
-    spotifyRedirectUri: spotifyRedirectUri
-  }
-}
-
-// Deploy Key Vault (depends on App Service for managed identity)
+// Deploy Key Vault first
 module keyVault './modules/key-vault.bicep' = {
   name: 'key-vault-deployment'
   params: {
     location: location
     environment: environment
     tags: commonTags
-    appServicePrincipalId: appService.outputs.appServicePrincipalId
   }
 }
 
-// Update App Service with Key Vault URI
-module appServiceUpdate './modules/app-service.bicep' = {
-  name: 'app-service-update-deployment'
+// Deploy App Service (Backend API) with Key Vault URI
+module appService './modules/app-service.bicep' = {
+  name: 'app-service-deployment'
   params: {
     location: location
     environment: environment
@@ -90,6 +74,15 @@ module appServiceUpdate './modules/app-service.bicep' = {
     keyVaultUri: keyVault.outputs.keyVaultUri
     frontendUrl: frontendUrl
     spotifyRedirectUri: spotifyRedirectUri
+  }
+}
+
+// Grant App Service access to Key Vault
+module keyVaultAccess './modules/key-vault-access.bicep' = {
+  name: 'key-vault-access-deployment'
+  params: {
+    keyVaultName: keyVault.outputs.keyVaultName
+    appServicePrincipalId: appService.outputs.appServicePrincipalId
   }
 }
 
@@ -125,3 +118,4 @@ output keyVaultUri string = keyVault.outputs.keyVaultUri
 // Frontend outputs
 output staticWebAppName string = staticWebApp.outputs.staticWebAppName
 output staticWebAppUrl string = staticWebApp.outputs.staticWebAppUrl
+output staticWebAppId string = staticWebApp.outputs.staticWebAppId

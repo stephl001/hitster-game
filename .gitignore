@@ -82,9 +82,21 @@ local.settings.json
 .env
 .env.local
 
+# Azure deployment outputs and logs
+.azure/deployment-log-*.txt
+.azure/deployment-outputs-*.json
+.azure/GITHUB_SECRETS.txt
+
 # Bicep/ARM outputs
 infra/**/*.json.backup
 infra/**/outputs/
+infrastructure/**/*.json.backup
+infrastructure/**/outputs/
+
+# Bicep compiled ARM templates
+*.bicep.json
+main.json
+!*.bicepparam.json
 
 # OS specific
 .DS_Store

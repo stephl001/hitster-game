@@ -31,7 +31,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   tags: tags
   sku: {
     name: appServicePlanSku
-    tier: appServicePlanSku == 'F1' ? 'Free' : 'Basic'
+    tier: appServicePlanSku == 'F1' ? 'Free' : (appServicePlanSku == 'B1' ? 'Basic' : 'Standard')
     capacity: 1
   }
   kind: 'linux'
@@ -54,7 +54,7 @@ resource appService 'Microsoft.Web/sites@2023-01-01' = {
     httpsOnly: true
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|9.0'
-      alwaysOn: appServicePlanSku != 'F1' // Cannot be enabled on F1
+      alwaysOn: appServicePlanSku != 'F1' // Cannot be enabled on F1, enabled on B1 and S1
       http20Enabled: true
       minTlsVersion: '1.2'
       ftpsState: 'Disabled'

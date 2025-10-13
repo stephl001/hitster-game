@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   deploy-infrastructure:
@@ -65,6 +66,21 @@ jobs:
           deploymentName: songster-${{ inputs.environment }}-${{ github.run_number }}
           failOnStdErr: false
 
+      - name: Configure Static Web App deployment token
+        run: |
+          echo "Retrieving Static Web App deployment token..."
+          DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
+            --name ${{ steps.deploy.outputs.staticWebAppName }} \
+            --query "properties.apiKey" \
+            -o tsv)
+
+          echo "Setting GitHub secret AZURE_STATIC_WEB_APP_API_TOKEN..."
+          gh secret set AZURE_STATIC_WEB_APP_API_TOKEN --body "$DEPLOYMENT_TOKEN"
+
+          echo "✓ Deployment token configured successfully"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Display deployment outputs
         run: |
           echo "### Deployment Outputs" >> $GITHUB_STEP_SUMMARY
@@ -79,3 +95,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Key Vault:**" >> $GITHUB_STEP_SUMMARY
           echo "- Name: ${{ steps.deploy.outputs.keyVaultName }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**GitHub Secrets:**" >> $GITHUB_STEP_SUMMARY
+          echo "- ✓ AZURE_STATIC_WEB_APP_API_TOKEN configured" >> $GITHUB_STEP_SUMMARY

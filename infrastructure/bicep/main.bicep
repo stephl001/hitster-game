@@ -76,9 +76,6 @@ module keyVault './modules/key-vault.bicep' = {
     tags: commonTags
     appServicePrincipalId: appService.outputs.appServicePrincipalId
   }
-  dependsOn: [
-    appService
-  ]
 }
 
 // Update App Service with Key Vault URI
@@ -94,9 +91,6 @@ module appServiceUpdate './modules/app-service.bicep' = {
     frontendUrl: frontendUrl
     spotifyRedirectUri: spotifyRedirectUri
   }
-  dependsOn: [
-    keyVault
-  ]
 }
 
 // Deploy Static Web App (Frontend)

@@ -29,9 +29,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment || 'dev' }}
 
-    env:
-      DOTNET_VERSION: '9.0.x'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -39,7 +36,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          global-json-file: ./backend/global.json
 
       - name: Restore dependencies
         run: dotnet restore
@@ -61,7 +58,7 @@ jobs:
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name: app-songster-api-${{ github.event.inputs.environment || 'dev' }}
+          app-name: app-songster-${{ github.event.inputs.environment || 'dev' }}
           package: ./backend/SongsterGame.Api/publish
 
       - name: Deployment summary

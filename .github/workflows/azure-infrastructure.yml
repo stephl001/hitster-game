@@ -67,7 +67,7 @@ jobs:
           failOnStdErr: false
 
       - name: Configure Static Web App deployment token
-        if: ${{ github.secret_source.GH_PAT != '' }}
+        continue-on-error: true
         run: |
           echo "Retrieving Static Web App deployment token..."
           DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
@@ -75,30 +75,24 @@ jobs:
             --query "properties.apiKey" \
             -o tsv)
 
+          if [ -z "$GH_TOKEN" ]; then
+            echo "⚠️ GH_PAT secret not configured - skipping automatic secret setup"
+            echo ""
+            echo "To enable automatic secret configuration:"
+            echo "1. Create a GitHub Personal Access Token with 'repo' scope"
+            echo "2. Add it as a repository secret named 'GH_PAT'"
+            echo ""
+            echo "Manually set the deployment token with:"
+            echo "gh secret set AZURE_STATIC_WEB_APP_API_TOKEN --body \"$DEPLOYMENT_TOKEN\""
+            exit 0
+          fi
+
           echo "Setting GitHub secret AZURE_STATIC_WEB_APP_API_TOKEN..."
           gh secret set AZURE_STATIC_WEB_APP_API_TOKEN --body "$DEPLOYMENT_TOKEN"
 
           echo "✓ Deployment token configured successfully"
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
-
-      - name: Manual secret configuration required
-        if: ${{ github.secret_source.GH_PAT == '' }}
-        run: |
-          echo "⚠️ GH_PAT secret not configured - skipping automatic secret setup"
-          echo ""
-          echo "To enable automatic secret configuration:"
-          echo "1. Create a GitHub Personal Access Token with 'repo' scope"
-          echo "2. Add it as a repository secret named 'GH_PAT'"
-          echo ""
-          echo "Or manually set the deployment token:"
-          DEPLOYMENT_TOKEN=$(az staticwebapp secrets list \
-            --name ${{ steps.deploy.outputs.staticWebAppName }} \
-            --query "properties.apiKey" \
-            -o tsv)
-          echo "Run: gh secret set AZURE_STATIC_WEB_APP_API_TOKEN --body \"<token>\""
-          echo ""
-          echo "Deployment token: $DEPLOYMENT_TOKEN"
 
       - name: Display deployment outputs
         run: |
@@ -115,10 +109,5 @@ jobs:
           echo "**Key Vault:**" >> $GITHUB_STEP_SUMMARY
           echo "- Name: ${{ steps.deploy.outputs.keyVaultName }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**GitHub Secrets:**" >> $GITHUB_STEP_SUMMARY
-          if [ -n "${{ secrets.GH_PAT }}" ]; then
-            echo "- ✓ AZURE_STATIC_WEB_APP_API_TOKEN configured automatically" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- ⚠️ AZURE_STATIC_WEB_APP_API_TOKEN requires manual setup (see logs)" >> $GITHUB_STEP_SUMMARY
-            echo "- Set GH_PAT secret to enable automatic configuration" >> $GITHUB_STEP_SUMMARY
-          fi
+          echo "**Configuration Notes:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Check workflow logs for Static Web App deployment token setup status" >> $GITHUB_STEP_SUMMARY

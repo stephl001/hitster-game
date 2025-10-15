@@ -1,0 +1,56 @@
+name: Deploy Backend to Production
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: ./backend/global.json
+
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: ./backend/SongsterGame.Api
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+        working-directory: ./backend/SongsterGame.Api
+
+      - name: Publish
+        run: dotnet publish --configuration Release --no-build --output ./publish
+        working-directory: ./backend/SongsterGame.Api
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: app-songster-api-prod
+          package: ./backend/SongsterGame.Api/publish
+
+      - name: Backend deployment summary
+        run: |
+          echo "### Backend Deployment Complete (Production)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Environment: prod" >> $GITHUB_STEP_SUMMARY
+          echo "Version: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "App Service: app-songster-api-prod" >> $GITHUB_STEP_SUMMARY
+          echo "URL: https://app-songster-api-prod.azurewebsites.net" >> $GITHUB_STEP_SUMMARY

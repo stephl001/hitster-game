@@ -277,14 +277,17 @@ For emergency production fixes that can't wait for testing:
 
 ### Automated Deployments
 
-- **Push to `main`** → Triggers `.github/workflows/deploy-dev.yml`
-  - Deploys backend to `app-songster-api-dev`
-  - Deploys frontend to `stapp-songster-web-dev`
+Deployments are optimized to only deploy what changed:
 
-- **Push tag `v*`** → Triggers `.github/workflows/deploy-prod.yml`
-  - Deploys backend to `app-songster-api-prod`
-  - Deploys frontend to `stapp-songster-web-prod`
-  - Includes version number in deployment summary
+**Development Environment (push to `main`):**
+- Backend changes → Triggers `deploy-dev-backend.yml` → Deploys to `app-songster-api-dev`
+- Frontend changes → Triggers `deploy-dev-frontend.yml` → Deploys to `stapp-songster-web-dev`
+
+**Production Environment (push tag `v*`):**
+- Tag push → Triggers both workflows in parallel:
+  - `deploy-prod-backend.yml` → Deploys to `app-songster-api-prod`
+  - `deploy-prod-frontend.yml` → Deploys to `stapp-songster-web-prod`
+- Both include version number in deployment summary
 
 ### Rollback Strategy
 

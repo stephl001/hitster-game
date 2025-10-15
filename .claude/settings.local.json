@@ -19,7 +19,8 @@
       "Bash(az group show:*)",
       "Bash(pwsh:*)",
       "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs"
+      "mcp__context7__get-library-docs",
+      "Bash(az staticwebapp secrets list:*)"
     ],
     "deny": [],
     "ask": []

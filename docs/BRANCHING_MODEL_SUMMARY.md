@@ -19,20 +19,31 @@ This document summarizes the trunk-based development model and automated deploym
 
 ### 2. GitHub Actions Workflows
 
-✅ **Updated `.github/workflows/deploy-dev.yml`**
-- Triggers on push to `main` branch
-- Ignores version tags (v*)
-- Deploys backend to `app-songster-api-dev`
-- Deploys frontend to `stapp-songster-web-dev`
-- Runs backend deployment first, then frontend
+**Optimized workflows to only deploy what changed:**
 
-✅ **Updated `.github/workflows/deploy-prod.yml`**
+✅ **Created `.github/workflows/deploy-dev-backend.yml`**
+- Triggers on push to `main` when `backend/**` changes
+- Deploys only backend to `app-songster-api-dev`
+
+✅ **Created `.github/workflows/deploy-dev-frontend.yml`**
+- Triggers on push to `main` when `frontend/**` changes
+- Deploys only frontend to `stapp-songster-web-dev`
+
+✅ **Created `.github/workflows/deploy-prod-backend.yml`**
 - Triggers on push of version tags (v*)
 - Deploys backend to `app-songster-api-prod`
+- Displays version number in deployment summary
+
+✅ **Created `.github/workflows/deploy-prod-frontend.yml`**
+- Triggers on push of version tags (v*)
 - Deploys frontend to `stapp-songster-web-prod`
-- Runs backend deployment first, then frontend
 - Uses separate Static Web App token: `AZURE_STATIC_WEB_APP_API_TOKEN_PROD`
 - Displays version number in deployment summary
+
+**Benefits of split workflows:**
+- Faster deployments (only deploy what changed)
+- Parallel deployments for production (both run simultaneously)
+- Clearer deployment logs and history
 
 ### 3. Documentation
 
@@ -97,10 +108,14 @@ main (trunk - single source of truth)
 
 ## Deployment Triggers
 
-| Trigger | Environment | Workflow | Backend | Frontend |
-|---------|-------------|----------|---------|----------|
-| Push to `main` | Dev | `deploy-dev.yml` | `app-songster-api-dev` | `stapp-songster-web-dev` |
-| Tag `v*` | Prod | `deploy-prod.yml` | `app-songster-api-prod` | `stapp-songster-web-prod` |
+| Trigger | Component | Environment | Workflow | Deploys To |
+|---------|-----------|-------------|----------|------------|
+| Push to `main` (backend changes) | Backend | Dev | `deploy-dev-backend.yml` | `app-songster-api-dev` |
+| Push to `main` (frontend changes) | Frontend | Dev | `deploy-dev-frontend.yml` | `stapp-songster-web-dev` |
+| Tag `v*` | Backend | Prod | `deploy-prod-backend.yml` | `app-songster-api-prod` |
+| Tag `v*` | Frontend | Prod | `deploy-prod-frontend.yml` | `stapp-songster-web-prod` |
+
+**Note:** Production tags trigger both backend and frontend workflows in parallel.
 
 ## Next Steps: Manual Configuration Required
 

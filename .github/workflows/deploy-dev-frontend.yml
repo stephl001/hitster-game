@@ -1,13 +1,12 @@
-name: Deploy to Dev Environment
+name: Deploy Frontend to Dev
 
 on:
   push:
     branches:
       - main
     paths:
-      - 'backend/**'
       - 'frontend/**'
-      - '.github/workflows/deploy-dev.yml'
+      - '.github/workflows/deploy-dev-frontend.yml'
     tags-ignore:
       - 'v*'
   workflow_dispatch:
@@ -17,54 +16,9 @@ permissions:
   pull-requests: write
 
 jobs:
-  deploy-backend:
-    runs-on: ubuntu-latest
-    environment: dev
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: ./backend/global.json
-
-      - name: Restore dependencies
-        run: dotnet restore
-        working-directory: ./backend/SongsterGame.Api
-
-      - name: Build
-        run: dotnet build --configuration Release --no-restore
-        working-directory: ./backend/SongsterGame.Api
-
-      - name: Publish
-        run: dotnet publish --configuration Release --no-build --output ./publish
-        working-directory: ./backend/SongsterGame.Api
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy to Azure App Service
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: app-songster-api-dev
-          package: ./backend/SongsterGame.Api/publish
-
-      - name: Backend deployment summary
-        run: |
-          echo "### Backend Deployment Complete (Dev)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Environment: dev" >> $GITHUB_STEP_SUMMARY
-          echo "App Service: app-songster-api-dev" >> $GITHUB_STEP_SUMMARY
-          echo "URL: https://app-songster-api-dev.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
-
   deploy-frontend:
     runs-on: ubuntu-latest
     environment: dev
-    needs: deploy-backend
 
     env:
       NODE_VERSION: '20.x'

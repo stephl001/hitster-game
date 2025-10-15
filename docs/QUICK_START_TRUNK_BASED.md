@@ -24,9 +24,10 @@ git commit -m "Add new feature"
 git push origin main
 ```
 
-**Result:** Your changes are automatically deployed to the **dev environment** at:
-- Backend: `https://app-songster-api-dev.azurewebsites.net`
-- Frontend: `https://stapp-songster-web-dev.azurewebsites.net` (check Azure portal for actual URL)
+**Result:** Only the changed component is deployed to the **dev environment**:
+- If you changed **backend** files → Backend deploys to `https://app-songster-api-dev.azurewebsites.net`
+- If you changed **frontend** files → Frontend deploys to `https://stapp-songster-web-dev.azurewebsites.net`
+- If you changed **both** → Both deploy (separate workflows run in parallel)
 
 ### 3. Test on Dev Environment
 - Open the dev frontend URL in your browser
@@ -42,9 +43,11 @@ git tag -a v1.0.0 -m "Initial production release"
 git push origin v1.0.0
 ```
 
-**Result:** Your changes are automatically deployed to the **prod environment** at:
+**Result:** Both backend and frontend are deployed to the **prod environment** (parallel workflows):
 - Backend: `https://app-songster-api-prod.azurewebsites.net`
 - Frontend: `https://stapp-songster-web-prod.azurewebsites.net` (check Azure portal for actual URL)
+
+**Note:** Production tags always deploy both backend and frontend, regardless of what changed.
 
 ## Version Tagging Guide
 
@@ -128,8 +131,10 @@ git push origin v1.0.1
 1. Go to your repository on GitHub
 2. Click **Actions** tab
 3. See the latest workflow runs:
-   - "Deploy to Dev Environment" - triggered by commits to main
-   - "Deploy to Production Environment" - triggered by version tags
+   - "Deploy Backend to Dev" - triggered by backend changes on main
+   - "Deploy Frontend to Dev" - triggered by frontend changes on main
+   - "Deploy Backend to Production" - triggered by version tags
+   - "Deploy Frontend to Production" - triggered by version tags
 
 ### Via Azure Portal
 1. Go to Azure Portal

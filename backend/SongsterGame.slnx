@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="SongsterGame.Api/SongsterGame.Api.csproj" />
+  <Project Path="SongsterGame.Tests/SongsterGame.Tests.csproj" />
+</Solution>

@@ -13,6 +13,8 @@ on:
 
 permissions:
   contents: read
+  checks: write
+  pull-requests: write
 
 jobs:
   deploy-backend:
@@ -30,11 +32,33 @@ jobs:
 
       - name: Restore dependencies
         run: dotnet restore
-        working-directory: ./backend/SongsterGame.Api
+        working-directory: ./backend
 
       - name: Build
         run: dotnet build --configuration Release --no-restore
-        working-directory: ./backend/SongsterGame.Api
+        working-directory: ./backend
+
+      - name: Run tests
+        run: dotnet test --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage"
+        working-directory: ./backend/SongsterGame.Tests
+
+      - name: Publish test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Backend Tests (Dev)
+          path: './backend/SongsterGame.Tests/TestResults/*.trx'
+          reporter: dotnet-trx
+          fail-on-error: true
+
+      - name: Publish code coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: './backend/SongsterGame.Tests/TestResults/**/coverage.cobertura.xml'
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
 
       - name: Publish
         run: dotnet publish --configuration Release --no-build --output ./publish
@@ -55,6 +79,8 @@ jobs:
         run: |
           echo "### Backend Deployment Complete (Dev)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Environment: dev" >> $GITHUB_STEP_SUMMARY
-          echo "App Service: app-songster-api-dev" >> $GITHUB_STEP_SUMMARY
-          echo "URL: https://app-songster-api-dev.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** dev" >> $GITHUB_STEP_SUMMARY
+          echo "**App Service:** app-songster-api-dev" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** https://app-songster-api-dev.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tests:** See test results above" >> $GITHUB_STEP_SUMMARY

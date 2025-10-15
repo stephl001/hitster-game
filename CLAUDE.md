@@ -178,12 +178,128 @@ Expected subscriptions:
 - **Integration**: SignalR hub tests with multiple clients
 - **E2E**: Playwright/Cypress for full game flow (when implemented)
 
+## Git Branching Model
+
+This project uses a **modified GitHub Flow** with environment-specific branches for automated deployments:
+
+### Branch Structure
+
+```
+main (production)
+├── develop (development/staging)
+└── feature/* (short-lived feature branches)
+```
+
+### Branch Descriptions
+
+- **`main`** (protected)
+  - Represents production-ready code
+  - Auto-deploys to **Azure prod environment**
+  - Only updated via Pull Requests from `develop`
+  - Requires PR approval before merging
+  - Protected against direct pushes and force pushes
+
+- **`develop`** (protected)
+  - Integration branch for all feature development
+  - Auto-deploys to **Azure dev environment**
+  - All feature branches merge here first
+  - Acts as staging/testing environment
+  - Protected against direct pushes
+
+- **`feature/*`** (temporary)
+  - Created from `develop` for new features/fixes
+  - Naming convention: `feature/add-spotify-auth`, `feature/fix-timeline-bug`
+  - Merged back to `develop` via Pull Request
+  - Deleted after merge
+
+### Development Workflow
+
+1. **Create feature branch from develop:**
+   ```bash
+   git checkout develop
+   git pull origin develop
+   git checkout -b feature/my-feature
+   ```
+
+2. **Make changes and commit:**
+   ```bash
+   git add .
+   git commit -m "Add feature description"
+   git push -u origin feature/my-feature
+   ```
+
+3. **Open Pull Request to develop:**
+   - Target branch: `develop`
+   - Get code review (optional for dev)
+   - Merge PR → auto-deploys to **dev environment**
+
+4. **Test in dev environment:**
+   - Verify functionality on Azure dev environment
+   - Fix any issues via new commits to the feature branch
+
+5. **Promote to production:**
+   - Open Pull Request: `develop` → `main`
+   - Requires approval
+   - Merge PR → auto-deploys to **prod environment**
+
+### Hotfix Workflow
+
+For urgent production fixes:
+
+1. **Create hotfix branch from main:**
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b hotfix/critical-issue
+   ```
+
+2. **Fix, test, and commit:**
+   ```bash
+   git add .
+   git commit -m "Fix critical issue"
+   git push -u origin hotfix/critical-issue
+   ```
+
+3. **Deploy to production:**
+   - Open PR: `hotfix/critical-issue` → `main`
+   - Get approval and merge → auto-deploys to prod
+
+4. **Backport to develop:**
+   - Open PR: `main` → `develop`
+   - Merge to sync changes back to develop branch
+
+### Automated Deployments
+
+- **Push to `develop`** → Triggers `.github/workflows/deploy-dev.yml`
+  - Deploys backend to `app-songster-api-dev`
+  - Deploys frontend to `stapp-songster-web-dev`
+
+- **Push to `main`** → Triggers `.github/workflows/deploy-prod.yml`
+  - Deploys backend to `app-songster-api-prod`
+  - Deploys frontend to `stapp-songster-web-prod`
+
+### Branch Protection Rules
+
+See [docs/BRANCH_PROTECTION_SETUP.md](./docs/BRANCH_PROTECTION_SETUP.md) for detailed configuration instructions.
+
+**Main branch protection:**
+- Require pull request reviews (1 approval)
+- Require status checks to pass
+- No direct pushes or force pushes
+- Linear history enforced
+
+**Develop branch protection:**
+- Require pull requests (optional reviews)
+- No direct pushes or force pushes
+- Linear history recommended
+
 ## Development Workflow
 
 1. **Start Backend First**: Ensure SignalR hub is running before frontend
 2. **Use Browser DevTools**: Network tab for SignalR messages, Console for WebRTC logs
 3. **Test with Multiple Clients**: Open 4+ browser tabs (different profiles/incognito) to simulate multiplayer
 4. **Mobile Testing**: Use Chrome DevTools device emulation, test on real devices
+5. **Follow Branching Model**: Always create feature branches from `develop`, never commit directly to `main` or `develop`
 
 ## Azure Deployment Notes
 
@@ -234,5 +350,8 @@ When implementing V2.0+ features, consider:
 library/API documentation. This means you should automatically use the Context7 MCP
 tools to resolve library id and get library docs without me having to explicitly ask.
 - Azure CLI is installed on this machine so you can call cli commands if you need to
-- Always create a new git branch when proceeding with some implementation if the current branch is main
-- Always rebase a local branch to main
+- Always create a new git branch when proceeding with some implementation:
+  - If on `main`, create feature branch from `develop` first
+  - If on `develop`, create feature branch from `develop`
+  - Follow naming convention: `feature/description` or `hotfix/description`
+- Always rebase feature branches to `develop` before merging (keep history clean)

@@ -15,6 +15,9 @@ Thumbs.db
 *.sln.docstates
 *.code-workspace
 
+# Claude Code
+.claude/settings.local.json
+
 # Frontend (Node.js / Vue.js)
 frontend/node_modules/
 frontend/dist/

@@ -51,3 +51,6 @@ app.MapHub<GameHub>("/gameHub");
 app.MapGet("/health", () => new { status = "healthy", timestamp = DateTime.UtcNow });
 
 app.Run();
+
+// Make Program class accessible for integration testing
+public partial class Program { }

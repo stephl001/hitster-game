@@ -2,12 +2,8 @@ name: Deploy to Production Environment
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - '.github/workflows/deploy-prod.yml'
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -56,6 +52,7 @@ jobs:
           echo "### Backend Deployment Complete (Production)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Environment: prod" >> $GITHUB_STEP_SUMMARY
+          echo "Version: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "App Service: app-songster-api-prod" >> $GITHUB_STEP_SUMMARY
           echo "URL: https://app-songster-api-prod.azurewebsites.net" >> $GITHUB_STEP_SUMMARY
 
@@ -107,4 +104,5 @@ jobs:
           echo "### Frontend Deployment Complete (Production)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Environment: prod" >> $GITHUB_STEP_SUMMARY
+          echo "Version: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "Static Web App: stapp-songster-web-prod" >> $GITHUB_STEP_SUMMARY

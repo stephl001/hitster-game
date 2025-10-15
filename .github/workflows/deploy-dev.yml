@@ -3,11 +3,13 @@ name: Deploy to Dev Environment
 on:
   push:
     branches:
-      - develop
+      - main
     paths:
       - 'backend/**'
       - 'frontend/**'
       - '.github/workflows/deploy-dev.yml'
+    tags-ignore:
+      - 'v*'
   workflow_dispatch:
 
 permissions:

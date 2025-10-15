@@ -180,118 +180,128 @@ Expected subscriptions:
 
 ## Git Branching Model
 
-This project uses a **modified GitHub Flow** with environment-specific branches for automated deployments:
+This project uses a **trunk-based development** approach optimized for solo development with automated deployments:
 
 ### Branch Structure
 
 ```
-main (production)
-├── develop (development/staging)
-└── feature/* (short-lived feature branches)
+main (trunk)
+  └── hotfix/* (only for emergency prod fixes, rare)
 ```
 
-### Branch Descriptions
+### Deployment Strategy
 
-- **`main`** (protected)
-  - Represents production-ready code
-  - Auto-deploys to **Azure prod environment**
-  - Only updated via Pull Requests from `develop`
-  - Requires PR approval before merging
-  - Protected against direct pushes and force pushes
+- **Commit to `main`** → Auto-deploys to **Azure dev environment**
+- **Create version tag** → Auto-deploys to **Azure prod environment**
 
-- **`develop`** (protected)
-  - Integration branch for all feature development
-  - Auto-deploys to **Azure dev environment**
-  - All feature branches merge here first
-  - Acts as staging/testing environment
-  - Protected against direct pushes
+This approach provides:
+- ✅ Single source of truth (main branch)
+- ✅ Automatic testing on dev with every commit
+- ✅ Explicit control over prod deployments via tags
+- ✅ Clear versioning history (v1.0.0, v1.1.0, etc.)
+- ✅ Fast iteration cycles for solo development
 
-- **`feature/*`** (temporary)
-  - Created from `develop` for new features/fixes
-  - Naming convention: `feature/add-spotify-auth`, `feature/fix-timeline-bug`
-  - Merged back to `develop` via Pull Request
-  - Deleted after merge
+### Daily Development Workflow
 
-### Development Workflow
-
-1. **Create feature branch from develop:**
-   ```bash
-   git checkout develop
-   git pull origin develop
-   git checkout -b feature/my-feature
-   ```
-
-2. **Make changes and commit:**
-   ```bash
-   git add .
-   git commit -m "Add feature description"
-   git push -u origin feature/my-feature
-   ```
-
-3. **Open Pull Request to develop:**
-   - Target branch: `develop`
-   - Get code review (optional for dev)
-   - Merge PR → auto-deploys to **dev environment**
-
-4. **Test in dev environment:**
-   - Verify functionality on Azure dev environment
-   - Fix any issues via new commits to the feature branch
-
-5. **Promote to production:**
-   - Open Pull Request: `develop` → `main`
-   - Requires approval
-   - Merge PR → auto-deploys to **prod environment**
-
-### Hotfix Workflow
-
-For urgent production fixes:
-
-1. **Create hotfix branch from main:**
+1. **Make changes directly on main:**
    ```bash
    git checkout main
    git pull origin main
+   # Make your changes
+   git add .
+   git commit -m "Add Spotify authentication"
+   git push origin main
+   # → Automatically deploys to DEV environment
+   ```
+
+2. **Test on dev environment:**
+   - Verify functionality on Azure dev environment
+   - Fix issues with additional commits
+   - Iterate quickly without branching overhead
+
+3. **Deploy to production when ready:**
+   ```bash
+   # Tag the current commit for production release
+   git tag -a v1.0.0 -m "Release version 1.0.0"
+   git push origin v1.0.0
+   # → Automatically deploys to PROD environment
+   ```
+
+### Version Tagging Convention
+
+Use semantic versioning for production releases:
+
+- **Major version** (v1.0.0 → v2.0.0): Breaking changes, major new features
+- **Minor version** (v1.0.0 → v1.1.0): New features, backward compatible
+- **Patch version** (v1.0.0 → v1.0.1): Bug fixes, minor changes
+
+```bash
+# Example: First production release
+git tag -a v1.0.0 -m "Initial production release"
+git push origin v1.0.0
+
+# Example: New feature release
+git tag -a v1.1.0 -m "Add WebRTC audio streaming"
+git push origin v1.1.0
+
+# Example: Bug fix release
+git tag -a v1.0.1 -m "Fix timeline placement bug"
+git push origin v1.0.1
+```
+
+### Hotfix Workflow (Rare)
+
+For emergency production fixes that can't wait for testing:
+
+1. **Create hotfix branch:**
+   ```bash
+   git checkout main
    git checkout -b hotfix/critical-issue
    ```
 
-2. **Fix, test, and commit:**
+2. **Fix, commit, and merge:**
    ```bash
    git add .
    git commit -m "Fix critical issue"
    git push -u origin hotfix/critical-issue
+   # Open PR to main, review, and merge
    ```
 
-3. **Deploy to production:**
-   - Open PR: `hotfix/critical-issue` → `main`
-   - Get approval and merge → auto-deploys to prod
-
-4. **Backport to develop:**
-   - Open PR: `main` → `develop`
-   - Merge to sync changes back to develop branch
+3. **Tag for immediate production deployment:**
+   ```bash
+   git checkout main
+   git pull origin main
+   git tag -a v1.0.2 -m "Hotfix: Critical issue"
+   git push origin v1.0.2
+   ```
 
 ### Automated Deployments
 
-- **Push to `develop`** → Triggers `.github/workflows/deploy-dev.yml`
+- **Push to `main`** → Triggers `.github/workflows/deploy-dev.yml`
   - Deploys backend to `app-songster-api-dev`
   - Deploys frontend to `stapp-songster-web-dev`
 
-- **Push to `main`** → Triggers `.github/workflows/deploy-prod.yml`
+- **Push tag `v*`** → Triggers `.github/workflows/deploy-prod.yml`
   - Deploys backend to `app-songster-api-prod`
   - Deploys frontend to `stapp-songster-web-prod`
+  - Includes version number in deployment summary
 
-### Branch Protection Rules
+### Rollback Strategy
 
-See [docs/BRANCH_PROTECTION_SETUP.md](./docs/BRANCH_PROTECTION_SETUP.md) for detailed configuration instructions.
+If a production deployment has issues:
 
-**Main branch protection:**
-- Require pull request reviews (1 approval)
-- Require status checks to pass
-- No direct pushes or force pushes
-- Linear history enforced
+```bash
+# Find the last good version
+git tag -l
 
-**Develop branch protection:**
-- Require pull requests (optional reviews)
-- No direct pushes or force pushes
-- Linear history recommended
+# Deploy the previous version
+git push origin v1.0.0
+# → Re-deploys v1.0.0 to production
+
+# Then fix the issue on main and tag a new version
+git tag -a v1.0.2 -m "Fix regression in v1.0.1"
+git push origin v1.0.2
+```
 
 ## Development Workflow
 
@@ -299,7 +309,7 @@ See [docs/BRANCH_PROTECTION_SETUP.md](./docs/BRANCH_PROTECTION_SETUP.md) for det
 2. **Use Browser DevTools**: Network tab for SignalR messages, Console for WebRTC logs
 3. **Test with Multiple Clients**: Open 4+ browser tabs (different profiles/incognito) to simulate multiplayer
 4. **Mobile Testing**: Use Chrome DevTools device emulation, test on real devices
-5. **Follow Branching Model**: Always create feature branches from `develop`, never commit directly to `main` or `develop`
+5. **Follow Trunk-Based Development**: Commit directly to `main`, deploys to dev automatically, tag for prod releases
 
 ## Azure Deployment Notes
 
@@ -350,8 +360,8 @@ When implementing V2.0+ features, consider:
 library/API documentation. This means you should automatically use the Context7 MCP
 tools to resolve library id and get library docs without me having to explicitly ask.
 - Azure CLI is installed on this machine so you can call cli commands if you need to
-- Always create a new git branch when proceeding with some implementation:
-  - If on `main`, create feature branch from `develop` first
-  - If on `develop`, create feature branch from `develop`
-  - Follow naming convention: `feature/description` or `hotfix/description`
-- Always rebase feature branches to `develop` before merging (keep history clean)
+- Follow trunk-based development:
+  - Commit directly to `main` for all changes (no feature branches for solo dev)
+  - Every push to `main` auto-deploys to dev environment
+  - Tag commits with version numbers (v*) to deploy to production
+  - Use `hotfix/*` branches only for emergency fixes (rare)

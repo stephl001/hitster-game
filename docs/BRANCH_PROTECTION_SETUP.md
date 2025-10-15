@@ -1,10 +1,10 @@
-# Branch Protection Rules Setup
+# Branch Protection Rules Setup (Optional)
 
-This document provides instructions for configuring branch protection rules on GitHub to support the branching model for this project.
+This document provides instructions for configuring branch protection rules on GitHub for trunk-based development. **Note: For solo development, branch protection is optional** but can help prevent accidental force pushes.
 
 ## Branch Protection Configuration
 
-### Main Branch (Production)
+### Main Branch (Trunk)
 
 1. Navigate to **Settings** > **Branches** in your GitHub repository
 2. Click **Add rule** or edit the existing rule for `main`
@@ -12,40 +12,21 @@ This document provides instructions for configuring branch protection rules on G
 
 **Branch name pattern:** `main`
 
-**Protect matching branches:**
-- ✅ Require a pull request before merging
-  - ✅ Require approvals: **1** (recommended)
-  - ✅ Dismiss stale pull request approvals when new commits are pushed
-  - ✅ Require review from Code Owners (optional)
-- ✅ Require status checks to pass before merging
-  - ✅ Require branches to be up to date before merging
-  - Add required status checks:
+**Protect matching branches (minimal protection for solo dev):**
+- ❌ Require a pull request before merging (disabled - need direct push for trunk-based)
+- ⚠️ Require status checks to pass before merging (optional)
+  - Add required status checks if desired:
     - `deploy-backend` (from deploy-dev workflow)
     - `deploy-frontend` (from deploy-dev workflow)
-- ✅ Require conversation resolution before merging
 - ✅ Require signed commits (optional but recommended)
-- ✅ Require linear history (recommended)
-- ✅ Include administrators (recommended for consistency)
-- ❌ Allow force pushes (keep disabled)
-- ❌ Allow deletions (keep disabled)
+- ✅ Require linear history (recommended - keeps history clean)
+- ❌ Include administrators (disabled - allows you to bypass rules when needed)
+- ❌ Allow force pushes (keep disabled - prevents accidental overwrites)
+- ❌ Allow deletions (keep disabled - prevents accidental branch deletion)
 
-### Develop Branch (Development)
-
-1. Navigate to **Settings** > **Branches** in your GitHub repository
-2. Click **Add rule**
-3. Configure the following settings:
-
-**Branch name pattern:** `develop`
-
-**Protect matching branches:**
-- ✅ Require a pull request before merging
-  - Require approvals: **0** or **1** (flexible for dev environment)
-- ✅ Require status checks to pass before merging (optional)
-  - Add build/test checks if you have them
-- ✅ Require conversation resolution before merging (optional)
-- ✅ Require linear history (recommended)
-- ❌ Allow force pushes (keep disabled)
-- ❌ Allow deletions (keep disabled)
+**Recommended minimal setup for solo development:**
+- Only enable "Require linear history" and "Block force pushes"
+- Keep everything else disabled to maintain workflow flexibility
 
 ## GitHub Environments Setup
 
@@ -65,9 +46,9 @@ You also need to configure GitHub Environments to match the deployment workflows
 1. Navigate to **Settings** > **Environments**
 2. Click **New environment** and name it `prod`
 3. Configure:
-   - **Deployment protection rules:**
-     - ✅ Required reviewers: Add yourself or team members (recommended)
-     - ✅ Wait timer: 0 minutes (or add a delay if desired)
+   - **Deployment protection rules (optional for solo dev):**
+     - Required reviewers: Optional (you're the only developer)
+     - Wait timer: Optional (can add a delay if you want time to cancel)
    - **Environment secrets:**
      - Add any prod-specific secrets (e.g., `SPOTIFY_CLIENT_ID` for prod)
      - Add `AZURE_STATIC_WEB_APP_API_TOKEN_PROD` (deployment token for prod Static Web App)
@@ -96,18 +77,17 @@ Navigate to **Settings** > **Secrets and variables** > **Actions** > **New repos
 
 ## Verification
 
-After setting up the branch protection rules:
+After setting up (minimal branch protection is optional):
 
-1. Try pushing directly to `main` - should be rejected
-2. Try pushing directly to `develop` - should be rejected
-3. Create a feature branch, make changes, and open a PR to `develop` - should succeed
-4. Merge PR to `develop` - should trigger dev deployment workflow
-5. Open PR from `develop` to `main` - should require approval
-6. Merge to `main` - should trigger prod deployment workflow
+1. Make a change and commit to `main` - should succeed (direct push allowed)
+2. Push to `main` - should trigger dev deployment workflow
+3. Create a version tag (e.g., `v0.1.0`) and push - should trigger prod deployment workflow
+4. Try force pushing to `main` - should be rejected (if force push protection enabled)
 
-## Notes
+## Notes for Trunk-Based Development
 
-- These settings enforce code review and prevent accidental direct commits to protected branches
-- The `main` branch has stricter rules because it deploys to production
-- Administrators are included in protection rules to maintain consistency
-- You can adjust the number of required reviewers based on team size
+- **Branch protection is optional** for solo development
+- If using protection, keep it minimal to maintain workflow flexibility
+- **Do NOT enable "Require pull request"** - this breaks trunk-based development
+- Linear history and force push blocking are the most useful protections
+- You can always adjust settings later as needs change

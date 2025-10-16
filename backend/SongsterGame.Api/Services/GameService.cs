@@ -2,16 +2,11 @@ using SongsterGame.Api.Models;
 
 namespace SongsterGame.Api.Services;
 
-public class GameService : IGameService
+public class GameService(ISpotifyService spotifyService) : IGameService
 {
     private Game? _currentGame; // MVP: Single game in memory
-    private readonly ISpotifyService _spotifyService;
+    private readonly ISpotifyService _spotifyService = spotifyService;
     private readonly Random _random = new();
-
-    public GameService(ISpotifyService spotifyService)
-    {
-        _spotifyService = spotifyService;
-    }
 
     public Game? CreateGame(string hostConnectionId, string hostNickname)
     {
@@ -25,15 +20,15 @@ public class GameService : IGameService
         _currentGame = new Game
         {
             GameCode = gameCode,
-            Players = new List<Player>
-            {
+            Players =
+            [
                 new Player
                 {
                     ConnectionId = hostConnectionId,
                     Nickname = hostNickname,
                     IsHost = true
                 }
-            },
+            ],
             State = GameState.Lobby
         };
 

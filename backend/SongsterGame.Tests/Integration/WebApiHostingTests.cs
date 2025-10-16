@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using SongsterGame.Api.Services;
 using System.Net;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace SongsterGame.Tests.Integration;
 
@@ -11,31 +13,24 @@ namespace SongsterGame.Tests.Integration;
 /// Integration tests to verify that the web API is properly configured,
 /// all services are correctly registered, and endpoints are accessible.
 /// </summary>
-public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
+public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly WebApplicationFactory<Program> _factory;
-    private readonly HttpClient _client;
-
-    public WebApiHostingTests(WebApplicationFactory<Program> factory)
-    {
-        _factory = factory;
-        _client = factory.CreateClient();
-    }
+    private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
-    public async Task Application_ShouldStart_WithoutErrors()
+    public void Application_ShouldStart_WithoutErrors()
     {
         // This test verifies that the application can bootstrap successfully
         // by creating a client, which internally builds and starts the application
         Assert.NotNull(_client);
-        Assert.NotNull(_factory.Services);
+        Assert.NotNull(factory.Services);
     }
 
     [Fact]
     public void ServiceRegistration_GameService_ShouldBeRegistered()
     {
         // Arrange & Act
-        var gameService = _factory.Services.GetService<IGameService>();
+        var gameService = factory.Services.GetService<IGameService>();
 
         // Assert
         Assert.NotNull(gameService);
@@ -46,7 +41,7 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     public void ServiceRegistration_SpotifyService_ShouldBeRegistered()
     {
         // Arrange & Act
-        var spotifyService = _factory.Services.GetService<ISpotifyService>();
+        var spotifyService = factory.Services.GetService<ISpotifyService>();
 
         // Assert
         Assert.NotNull(spotifyService);
@@ -57,7 +52,7 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     public void ServiceRegistration_HttpClient_ShouldBeRegistered()
     {
         // Arrange & Act
-        var httpClientFactory = _factory.Services.GetService<IHttpClientFactory>();
+        var httpClientFactory = factory.Services.GetService<IHttpClientFactory>();
 
         // Assert
         Assert.NotNull(httpClientFactory);
@@ -82,26 +77,15 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Arrange
         var hubUrl = $"{_client.BaseAddress}gameHub";
-        var connection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+        await using var connection = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
-        try
-        {
-            // Act
-            await connection.StartAsync();
+        // Act
+        await connection.StartAsync();
 
-            // Assert
-            Assert.Equal(HubConnectionState.Connected, connection.State);
-        }
-        finally
-        {
-            // Cleanup
-            await connection.DisposeAsync();
-        }
+        // Assert
+        Assert.Equal(HubConnectionState.Connected, connection.State);
     }
 
     [Fact]
@@ -109,37 +93,26 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Arrange
         var hubUrl = $"{_client.BaseAddress}gameHub";
-        var connection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+        await using var connection = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
-        try
-        {
-            // Act
-            await connection.StartAsync();
-            await connection.StopAsync();
+        // Act
+        await connection.StartAsync();
+        await connection.StopAsync();
 
-            // Assert
-            Assert.Equal(HubConnectionState.Disconnected, connection.State);
-        }
-        finally
-        {
-            // Cleanup
-            await connection.DisposeAsync();
-        }
+        // Assert
+        Assert.Equal(HubConnectionState.Disconnected, connection.State);
     }
 
     [Fact]
     public async Task OpenApiEndpoint_InDevelopment_ShouldBeAccessible()
     {
         // Arrange
-        var customFactory = _factory.WithWebHostBuilder(builder =>
+        var customFactory = factory.WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Development");
-            builder.ConfigureAppConfiguration((context, config) =>
+            builder.ConfigureAppConfiguration((_, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
@@ -161,8 +134,8 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     public void ServiceLifetime_GameService_ShouldBeSingleton()
     {
         // Arrange & Act
-        var service1 = _factory.Services.GetService<IGameService>();
-        var service2 = _factory.Services.GetService<IGameService>();
+        var service1 = factory.Services.GetService<IGameService>();
+        var service2 = factory.Services.GetService<IGameService>();
 
         // Assert
         Assert.Same(service1, service2);
@@ -172,8 +145,8 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     public void ServiceLifetime_SpotifyService_ShouldBeSingleton()
     {
         // Arrange & Act
-        var service1 = _factory.Services.GetService<ISpotifyService>();
-        var service2 = _factory.Services.GetService<ISpotifyService>();
+        var service1 = factory.Services.GetService<ISpotifyService>();
+        var service2 = factory.Services.GetService<ISpotifyService>();
 
         // Assert
         Assert.Same(service1, service2);
@@ -186,9 +159,9 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Arrange
         var origin = "http://localhost:5173";
-        var customFactory = _factory.WithWebHostBuilder(builder =>
+        var customFactory = factory.WithWebHostBuilder(builder =>
         {
-            builder.ConfigureAppConfiguration((context, config) =>
+            builder.ConfigureAppConfiguration((_, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
@@ -216,9 +189,9 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Arrange
         var origin = "http://localhost:5173";
-        var customFactory = _factory.WithWebHostBuilder(builder =>
+        var customFactory = factory.WithWebHostBuilder(builder =>
         {
-            builder.ConfigureAppConfiguration((context, config) =>
+            builder.ConfigureAppConfiguration((_, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
@@ -247,9 +220,9 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var authorizedOrigin = "http://localhost:5173";
         var unauthorizedOrigin = "http://malicious-site.com";
-        var customFactory = _factory.WithWebHostBuilder(builder =>
+        var customFactory = factory.WithWebHostBuilder(builder =>
         {
-            builder.ConfigureAppConfiguration((context, config) =>
+            builder.ConfigureAppConfiguration((_, config) =>
             {
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
@@ -283,30 +256,20 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Arrange
         var hubUrl = $"{_client.BaseAddress}gameHub";
-        var connection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+        await using var connection = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
-        try
-        {
-            await connection.StartAsync();
+        await connection.StartAsync();
 
-            // Act
-            var result = await connection.InvokeAsync<dynamic>("CreateGame", "TestPlayer");
+        // Act
+        var result = await connection.InvokeAsync<JsonObject>("CreateGame", "TestPlayer");
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.True(result.success);
-            Assert.NotNull(result.gameCode);
-            Assert.NotNull(result.players);
-        }
-        finally
-        {
-            await connection.DisposeAsync();
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result["success"]?.GetValue<bool>());
+        Assert.NotNull(result["gameCode"]?.GetValue<string>());
+        Assert.NotEmpty(result["players"]?.AsArray() ?? []);
     }
 
     [Fact]
@@ -314,41 +277,27 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Arrange
         var hubUrl = $"{_client.BaseAddress}gameHub";
-        var connection1 = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+        await using var connection1 = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
-        var connection2 = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+        await using var connection2 = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
-        try
-        {
-            await connection1.StartAsync();
-            await connection2.StartAsync();
+        await connection1.StartAsync();
+        await connection2.StartAsync();
 
-            // Act - Create first game
-            var result1 = await connection1.InvokeAsync<dynamic>("CreateGame", "Player1");
+        // Act - Create first game
+        var result1 = await connection1.InvokeAsync<JsonObject>("CreateGame", "Player1");
 
-            // Act - Try to create second game (should fail in MVP - only one game allowed)
-            var result2 = await connection2.InvokeAsync<dynamic>("CreateGame", "Player2");
+        // Act - Try to create second game (should fail in MVP - only one game allowed)
+        var result2 = await connection2.InvokeAsync<JsonObject>("CreateGame", "Player2");
 
-            // Assert
-            Assert.True(result1.success);
-            Assert.False(result2.success);
-            Assert.Contains("already exists", (string)result2.message, StringComparison.OrdinalIgnoreCase);
-        }
-        finally
-        {
-            await connection1.DisposeAsync();
-            await connection2.DisposeAsync();
-        }
+        // Assert
+        Assert.True(result1["success"]?.GetValue<bool>());
+        Assert.False(result2["success"]?.GetValue<bool>());
+        Assert.Contains("already exists", result2["message"]?.GetValue<string>(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -356,43 +305,28 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Arrange
         var hubUrl = $"{_client.BaseAddress}gameHub";
-        var hostConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+        await using var hostConnection = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
-        var playerConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+        await using var playerConnection = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
-        try
-        {
-            await hostConnection.StartAsync();
-            await playerConnection.StartAsync();
+        await hostConnection.StartAsync();
+        await playerConnection.StartAsync();
 
-            // Act - Create game
-            var createResult = await hostConnection.InvokeAsync<dynamic>("CreateGame", "Host");
-            string gameCode = createResult.gameCode;
+        // Act - Create game
+        var createResult = await hostConnection.InvokeAsync<JsonObject>("CreateGame", "Host");
+        string gameCode = createResult["gameCode"]!.GetValue<string>();
 
-            // Act - Join game
-            var joinResult = await playerConnection.InvokeAsync<dynamic>("JoinGame", gameCode, "Player2");
+        // Act - Join game
+        var joinResult = await playerConnection.InvokeAsync<JsonObject>("JoinGame", gameCode, "Player2");
 
-            // Assert
-            Assert.NotNull(joinResult);
-            Assert.True(joinResult.success);
-            Assert.NotNull(joinResult.players);
-            Assert.Equal(2, ((IEnumerable<dynamic>)joinResult.players).Count());
-        }
-        finally
-        {
-            await hostConnection.DisposeAsync();
-            await playerConnection.DisposeAsync();
-        }
+        // Assert
+        Assert.NotNull(joinResult);
+        Assert.True(joinResult["success"]?.GetValue<bool>());
+        Assert.Equal(2, (joinResult["players"]?.AsArray() ?? []).Count);
     }
 
     [Fact]
@@ -400,28 +334,18 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Arrange
         var hubUrl = $"{_client.BaseAddress}gameHub";
-        var connection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+        await using var connection = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
-        try
-        {
-            await connection.StartAsync();
+        await connection.StartAsync();
 
-            // Act - Try to join non-existent game
-            var result = await connection.InvokeAsync<dynamic>("JoinGame", "INVALID", "Player1");
+        // Act - Try to join non-existent game
+        var result = await connection.InvokeAsync<JsonObject>("JoinGame", "INVALID", "Player1");
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.success);
-        }
-        finally
-        {
-            await connection.DisposeAsync();
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result["success"]?.GetValue<bool>());
     }
 
     [Fact]
@@ -429,32 +353,23 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Arrange
         var hubUrl = $"{_client.BaseAddress}gameHub";
-        var connection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+        await using var connection = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
-        try
-        {
-            await connection.StartAsync();
+        await connection.StartAsync();
 
-            // Act - Create game
-            var createResult = await connection.InvokeAsync<dynamic>("CreateGame", "Host");
-            string gameCode = createResult.gameCode;
+        // Act - Create game
+        var createResult = await connection.InvokeAsync<JsonObject>("CreateGame", "Host");
+        string gameCode = createResult["gameCode"]!.GetValue<string>();
+        await connection.InvokeAsync<JsonObject>("JoinGame", gameCode, "Player2");
 
-            // Act - Start game
-            var startResult = await connection.InvokeAsync<dynamic>("StartGame", gameCode);
+        // Act - Start game
+        var startResult = await connection.InvokeAsync<JsonObject>("StartGame", gameCode);
 
-            // Assert
-            Assert.NotNull(startResult);
-            Assert.True(startResult.success);
-        }
-        finally
-        {
-            await connection.DisposeAsync();
-        }
+        // Assert
+        Assert.NotNull(startResult);
+        Assert.True(startResult["success"]?.GetValue<bool>());
     }
 
     [Fact]
@@ -462,43 +377,29 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Arrange
         var hubUrl = $"{_client.BaseAddress}gameHub";
-        var hostConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+        await using var hostConnection = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
-        var playerConnection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+        await using var playerConnection = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
-        try
-        {
-            await hostConnection.StartAsync();
-            await playerConnection.StartAsync();
+        await hostConnection.StartAsync();
+        await playerConnection.StartAsync();
 
-            // Act - Create game and join with second player
-            var createResult = await hostConnection.InvokeAsync<dynamic>("CreateGame", "Host");
-            string gameCode = createResult.gameCode;
-            await playerConnection.InvokeAsync<dynamic>("JoinGame", gameCode, "Player2");
+        // Act - Create game and join with second player
+        var createResult = await hostConnection.InvokeAsync<JsonObject>("CreateGame", "Host");
+        string gameCode = createResult["gameCode"]!.GetValue<string>();
+        await playerConnection.InvokeAsync<JsonObject>("JoinGame", gameCode, "Player2");
 
-            // Act - Try to start game from non-host connection
-            var startResult = await playerConnection.InvokeAsync<dynamic>("StartGame", gameCode);
+        // Act - Try to start game from non-host connection
+        var startResult = await playerConnection.InvokeAsync<JsonObject>("StartGame", gameCode);
 
-            // Assert
-            Assert.NotNull(startResult);
-            Assert.False(startResult.success);
-            Assert.Contains("host", (string)startResult.message, StringComparison.OrdinalIgnoreCase);
-        }
-        finally
-        {
-            await hostConnection.DisposeAsync();
-            await playerConnection.DisposeAsync();
-        }
+        // Assert
+        Assert.NotNull(startResult);
+        Assert.False(startResult["success"]?.GetValue<bool>());
+        Assert.Contains("host", startResult["message"]?.GetValue<string>(), StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -506,35 +407,25 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Arrange
         var hubUrl = $"{_client.BaseAddress}gameHub";
-        var connection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+        await using var connection = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
-        try
-        {
-            await connection.StartAsync();
+        await connection.StartAsync();
 
-            // Act - Create and start game
-            var createResult = await connection.InvokeAsync<dynamic>("CreateGame", "Host");
-            string gameCode = createResult.gameCode;
-            await connection.InvokeAsync<dynamic>("StartGame", gameCode);
+        // Act - Create and start game
+        var createResult = await connection.InvokeAsync<JsonObject>("CreateGame", "Host");
+        string gameCode = createResult["gameCode"]!.GetValue<string>();
+        await connection.InvokeAsync<JsonObject>("StartGame", gameCode);
 
-            // Act - Place card
-            var placeResult = await connection.InvokeAsync<dynamic>("PlaceCard", gameCode, 0);
+        // Act - Place card
+        var placeResult = await connection.InvokeAsync<JsonObject>("PlaceCard", gameCode, 0);
 
-            // Assert
-            Assert.NotNull(placeResult);
-            Assert.True(placeResult.success);
-            // isValid may be true or false depending on the card, but should be present
-            Assert.NotNull(placeResult.isValid);
-        }
-        finally
-        {
-            await connection.DisposeAsync();
-        }
+        // Assert
+        Assert.NotNull(placeResult);
+        Assert.True(placeResult["success"]?.GetValue<bool>());
+        // isValid may be true or false depending on the card, but should be present
+        Assert.NotNull(placeResult["isValid"]?.GetValue<bool>());
     }
 
     #endregion
@@ -567,17 +458,12 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var invalidHubUrl = $"{_client.BaseAddress}invalidHub";
         var connection = new HubConnectionBuilder()
-            .WithUrl(invalidHubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+            .WithUrl(invalidHubUrl,
+                options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
         // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(async () =>
-        {
-            await connection.StartAsync();
-        });
+        await Assert.ThrowsAsync<HttpRequestException>(async () => { await connection.StartAsync(); });
     }
 
     [Fact]
@@ -585,29 +471,19 @@ public class WebApiHostingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Arrange
         var hubUrl = $"{_client.BaseAddress}gameHub";
-        var connection = new HubConnectionBuilder()
-            .WithUrl(hubUrl, options =>
-            {
-                options.HttpMessageHandlerFactory = _ => _factory.Server.CreateHandler();
-            })
+        await using var connection = new HubConnectionBuilder()
+            .WithUrl(hubUrl, options => { options.HttpMessageHandlerFactory = _ => factory.Server.CreateHandler(); })
             .Build();
 
-        try
-        {
-            await connection.StartAsync();
+        await connection.StartAsync();
 
-            // Act - Try to place card in non-existent game
-            var result = await connection.InvokeAsync<dynamic>("PlaceCard", "INVALID", 0);
+        // Act - Try to place card in non-existent game
+        var result = await connection.InvokeAsync<JsonObject>("PlaceCard", "INVALID", 0);
 
-            // Assert
-            Assert.NotNull(result);
-            Assert.False(result.success);
-            Assert.Contains("not found", (string)result.message, StringComparison.OrdinalIgnoreCase);
-        }
-        finally
-        {
-            await connection.DisposeAsync();
-        }
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result["success"]?.GetValue<bool>());
+        Assert.Contains("not found", result["message"]?.GetValue<string>(), StringComparison.OrdinalIgnoreCase);
     }
 
     #endregion

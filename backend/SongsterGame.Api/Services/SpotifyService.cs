@@ -2,16 +2,9 @@ using SongsterGame.Api.Models;
 
 namespace SongsterGame.Api.Services;
 
-public class SpotifyService : ISpotifyService
+public class SpotifyService(IConfiguration configuration, HttpClient httpClient) : ISpotifyService
 {
-    private readonly IConfiguration _configuration;
-    private readonly HttpClient _httpClient;
-
-    public SpotifyService(IConfiguration configuration, HttpClient httpClient)
-    {
-        _configuration = configuration;
-        _httpClient = httpClient;
-    }
+    private readonly HttpClient _httpClient = httpClient;
 
     public Task<List<MusicCard>> FetchPlaylistTracksAsync(string playlistId)
     {
@@ -26,7 +19,7 @@ public class SpotifyService : ISpotifyService
     public Task<string> GetAuthorizationUrlAsync(string redirectUri)
     {
         // TODO: Build Spotify OAuth URL
-        var clientId = _configuration["Spotify:ClientId"];
+        var clientId = configuration["Spotify:ClientId"];
         var scopes = "streaming user-read-email user-read-private";
         var authUrl = $"https://accounts.spotify.com/authorize?" +
                      $"client_id={clientId}&" +

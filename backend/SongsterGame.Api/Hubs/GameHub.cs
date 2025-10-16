@@ -1,25 +1,15 @@
 using Microsoft.AspNetCore.SignalR;
-using SongsterGame.Api.Models;
 using SongsterGame.Api.Services;
 
 namespace SongsterGame.Api.Hubs;
 
-public class GameHub : Hub
+public class GameHub(IGameService gameService, ILogger<GameHub> logger) : Hub
 {
-    private readonly IGameService _gameService;
-    private readonly ILogger<GameHub> _logger;
-
-    public GameHub(IGameService gameService, ILogger<GameHub> logger)
-    {
-        _gameService = gameService;
-        _logger = logger;
-    }
-
     public async Task<object> CreateGame(string nickname)
     {
         try
         {
-            var game = _gameService.CreateGame(Context.ConnectionId, nickname);
+            var game = gameService.CreateGame(Context.ConnectionId, nickname);
             if (game == null)
             {
                 return new { success = false, message = "A game already exists" };
@@ -27,7 +17,7 @@ public class GameHub : Hub
 
             await Groups.AddToGroupAsync(Context.ConnectionId, game.GameCode);
 
-            _logger.LogInformation("Game created: {GameCode} by {Nickname}", game.GameCode, nickname);
+            logger.LogInformation("Game created: {GameCode} by {Nickname}", game.GameCode, nickname);
 
             return new
             {
@@ -38,7 +28,7 @@ public class GameHub : Hub
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating game");
+            logger.LogError(ex, "Error creating game");
             return new { success = false, message = "Failed to create game" };
         }
     }
@@ -47,13 +37,13 @@ public class GameHub : Hub
     {
         try
         {
-            var success = _gameService.JoinGame(gameCode, Context.ConnectionId, nickname);
+            var success = gameService.JoinGame(gameCode, Context.ConnectionId, nickname);
             if (!success)
             {
                 return new { success = false, message = "Unable to join game" };
             }
 
-            var game = _gameService.GetGame(gameCode);
+            var game = gameService.GetGame(gameCode);
             if (game == null)
             {
                 return new { success = false, message = "Game not found" };
@@ -68,7 +58,7 @@ public class GameHub : Hub
                 players = game.Players.Select(p => new { p.Nickname, p.IsHost })
             });
 
-            _logger.LogInformation("Player {Nickname} joined game {GameCode}", nickname, gameCode);
+            logger.LogInformation("Player {Nickname} joined game {GameCode}", nickname, gameCode);
 
             return new
             {
@@ -78,7 +68,7 @@ public class GameHub : Hub
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error joining game");
+            logger.LogError(ex, "Error joining game");
             return new { success = false, message = "Failed to join game" };
         }
     }
@@ -87,7 +77,7 @@ public class GameHub : Hub
     {
         try
         {
-            var game = _gameService.GetGame(gameCode);
+            var game = gameService.GetGame(gameCode);
             if (game == null)
             {
                 return new { success = false, message = "Game not found" };
@@ -100,7 +90,7 @@ public class GameHub : Hub
                 return new { success = false, message = "Only host can start the game" };
             }
 
-            var success = _gameService.StartGame(gameCode);
+            var success = gameService.StartGame(gameCode);
             if (!success)
             {
                 return new { success = false, message = "Unable to start game" };
@@ -113,13 +103,13 @@ public class GameHub : Hub
                 card = game.CurrentCard
             });
 
-            _logger.LogInformation("Game {GameCode} started", gameCode);
+            logger.LogInformation("Game {GameCode} started", gameCode);
 
             return new { success = true };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error starting game");
+            logger.LogError(ex, "Error starting game");
             return new { success = false, message = "Failed to start game" };
         }
     }
@@ -128,7 +118,7 @@ public class GameHub : Hub
     {
         try
         {
-            var game = _gameService.GetGame(gameCode);
+            var game = gameService.GetGame(gameCode);
             if (game == null)
             {
                 return new { success = false, message = "Game not found" };
@@ -140,10 +130,10 @@ public class GameHub : Hub
                 return new { success = false, message = "Player not found" };
             }
 
-            var isValid = _gameService.PlaceCard(gameCode, Context.ConnectionId, position);
+            var isValid = gameService.PlaceCard(gameCode, Context.ConnectionId, position);
 
             // Check if game is finished
-            var winner = _gameService.GetWinner(gameCode);
+            var winner = gameService.GetWinner(gameCode);
             if (winner != null)
             {
                 await Clients.Group(gameCode).SendAsync("GameWon", new
@@ -152,7 +142,7 @@ public class GameHub : Hub
                     timeline = winner.Timeline
                 });
 
-                _logger.LogInformation("Game {GameCode} won by {Winner}", gameCode, winner.Nickname);
+                logger.LogInformation("Game {GameCode} won by {Winner}", gameCode, winner.Nickname);
 
                 return new { success = true, isValid, gameFinished = true };
             }
@@ -172,7 +162,7 @@ public class GameHub : Hub
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error placing card");
+            logger.LogError(ex, "Error placing card");
             return new { success = false, message = "Failed to place card" };
         }
     }
@@ -181,13 +171,13 @@ public class GameHub : Hub
     {
         try
         {
-            var game = _gameService.GetCurrentGame();
+            var game = gameService.GetCurrentGame();
             if (game != null)
             {
                 var player = game.Players.FirstOrDefault(p => p.ConnectionId == Context.ConnectionId);
                 if (player != null)
                 {
-                    _gameService.RemovePlayer(Context.ConnectionId);
+                    gameService.RemovePlayer(Context.ConnectionId);
 
                     await Clients.Group(game.GameCode).SendAsync("PlayerLeft", new
                     {
@@ -195,13 +185,13 @@ public class GameHub : Hub
                         gameEnded = game.Players.Count == 0 || player.IsHost
                     });
 
-                    _logger.LogInformation("Player {Nickname} left game {GameCode}", player.Nickname, game.GameCode);
+                    logger.LogInformation("Player {Nickname} left game {GameCode}", player.Nickname, game.GameCode);
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error handling disconnect");
+            logger.LogError(ex, "Error handling disconnect");
         }
 
         await base.OnDisconnectedAsync(exception);

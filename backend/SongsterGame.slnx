@@ -1,4 +1,8 @@
 <Solution>
+  <Folder Name="/Global/">
+    <File Path="global.json" />
+    <File Path="..\CLAUDE.md" />
+  </Folder>
   <Project Path="SongsterGame.Api/SongsterGame.Api.csproj" />
   <Project Path="SongsterGame.Tests/SongsterGame.Tests.csproj" />
 </Solution>

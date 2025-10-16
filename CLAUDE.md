@@ -178,6 +178,9 @@ Expected subscriptions:
 - **Integration**: SignalR hub tests with multiple clients
 - **E2E**: Playwright/Cypress for full game flow (when implemented)
 
+### Code instructions
+- Use 'using' and 'await using' with IDisposable and IAsyncDisposable instances instead of try-finally blocks
+
 ## Git Branching Model
 
 This project uses a **trunk-based development** approach optimized for solo development with automated deployments:

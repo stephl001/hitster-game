@@ -2,6 +2,7 @@ using Bogus;
 using NSubstitute;
 using SongsterGame.Api.Models;
 using SongsterGame.Api.Services;
+using Xunit.Categories;
 
 namespace SongsterGame.Tests.Unit.Services;
 
@@ -29,6 +30,7 @@ public class GameServiceTests
     }
 
     [Fact]
+    [UnitTest]
     public void CreateGame_WhenNoGameExists_ReturnsNewGame()
     {
         // Arrange
@@ -48,6 +50,7 @@ public class GameServiceTests
     }
 
     [Fact]
+    [UnitTest]
     public void CreateGame_WhenGameAlreadyExists_ReturnsNull()
     {
         // Arrange
@@ -65,6 +68,7 @@ public class GameServiceTests
     }
 
     [Fact]
+    [UnitTest]
     public void GenerateGameCode_ReturnsEightCharacterCode()
     {
         // Arrange & Act
@@ -77,6 +81,7 @@ public class GameServiceTests
     }
 
     [Fact]
+    [UnitTest]
     public void ValidatePlacement_ValidPlacementBetweenCards_ReturnsTrue()
     {
         // Arrange
@@ -96,6 +101,7 @@ public class GameServiceTests
     }
 
     [Fact]
+    [UnitTest]
     public void ValidatePlacement_InvalidPlacement_YearTooEarly_ReturnsFalse()
     {
         // Arrange
@@ -115,6 +121,7 @@ public class GameServiceTests
     }
 
     [Fact]
+    [UnitTest]
     public void ValidatePlacement_InvalidPlacement_YearTooLate_ReturnsFalse()
     {
         // Arrange
@@ -134,6 +141,7 @@ public class GameServiceTests
     }
 
     [Fact]
+    [UnitTest]
     public void ValidatePlacement_FirstCardInTimeline_ReturnsTrue()
     {
         // Arrange
@@ -149,6 +157,7 @@ public class GameServiceTests
     }
 
     [Fact]
+    [UnitTest]
     public void ValidatePlacement_AtStartOfTimeline_ValidYear_ReturnsTrue()
     {
         // Arrange
@@ -167,6 +176,7 @@ public class GameServiceTests
     }
 
     [Fact]
+    [UnitTest]
     public void ValidatePlacement_AtEndOfTimeline_ValidYear_ReturnsTrue()
     {
         // Arrange
@@ -185,6 +195,7 @@ public class GameServiceTests
     }
 
     [Fact]
+    [UnitTest]
     public void JoinGame_ValidGameCode_AddsPlayer()
     {
         // Arrange
@@ -205,6 +216,7 @@ public class GameServiceTests
     }
 
     [Fact]
+    [UnitTest]
     public void JoinGame_DuplicateNickname_ReturnsFalse()
     {
         // Arrange
@@ -223,6 +235,7 @@ public class GameServiceTests
     }
 
     [Fact]
+    [UnitTest]
     public void JoinGame_GameFull_ReturnsFalse()
     {
         // Arrange

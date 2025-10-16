@@ -6,6 +6,7 @@ using System.Net;
 using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Xunit.Categories;
 
 namespace SongsterGame.Tests.Integration;
 
@@ -18,6 +19,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
+    [IntegrationTest]
     public void Application_ShouldStart_WithoutErrors()
     {
         // This test verifies that the application can bootstrap successfully
@@ -27,6 +29,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public void ServiceRegistration_GameService_ShouldBeRegistered()
     {
         // Arrange & Act
@@ -38,6 +41,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public void ServiceRegistration_SpotifyService_ShouldBeRegistered()
     {
         // Arrange & Act
@@ -49,6 +53,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public void ServiceRegistration_HttpClient_ShouldBeRegistered()
     {
         // Arrange & Act
@@ -59,6 +64,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task HealthEndpoint_ShouldReturn_HealthyStatus()
     {
         // Act
@@ -73,6 +79,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task SignalRHub_ShouldBeAccessible()
     {
         // Arrange
@@ -89,6 +96,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task SignalRHub_AfterConnection_ShouldAllowDisconnection()
     {
         // Arrange
@@ -106,6 +114,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task OpenApiEndpoint_InDevelopment_ShouldBeAccessible()
     {
         // Arrange
@@ -131,6 +140,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public void ServiceLifetime_GameService_ShouldBeSingleton()
     {
         // Arrange & Act
@@ -142,6 +152,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public void ServiceLifetime_SpotifyService_ShouldBeSingleton()
     {
         // Arrange & Act
@@ -155,6 +166,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     #region CORS Policy Tests
 
     [Fact]
+    [IntegrationTest]
     public async Task CorsPolicy_ShouldAllowConfiguredOrigin()
     {
         // Arrange
@@ -185,6 +197,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task CorsPolicy_ShouldAllowCredentials()
     {
         // Arrange
@@ -215,6 +228,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task CorsPolicy_ShouldRejectUnauthorizedOrigin()
     {
         // Arrange
@@ -252,6 +266,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     #region SignalR Hub Method Tests
 
     [Fact]
+    [IntegrationTest]
     public async Task GameHub_CreateGame_ShouldReturnSuccess()
     {
         // Arrange
@@ -273,6 +288,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task GameHub_CreateGame_ShouldFailIfGameAlreadyExists()
     {
         // Arrange
@@ -301,6 +317,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task GameHub_JoinGame_ShouldSucceedWithValidGameCode()
     {
         // Arrange
@@ -330,6 +347,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task GameHub_JoinGame_ShouldFailWithInvalidGameCode()
     {
         // Arrange
@@ -349,6 +367,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task GameHub_StartGame_ShouldSucceedWhenCalledByHost()
     {
         // Arrange
@@ -373,6 +392,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task GameHub_StartGame_ShouldFailWhenCalledByNonHost()
     {
         // Arrange
@@ -403,6 +423,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task GameHub_PlaceCard_ShouldReturnResult()
     {
         // Arrange
@@ -433,6 +454,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     #region Negative Test Cases
 
     [Fact]
+    [IntegrationTest]
     public async Task NonExistentEndpoint_ShouldReturn404()
     {
         // Act
@@ -443,6 +465,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task HealthEndpoint_WithInvalidMethod_ShouldReturn405()
     {
         // Act
@@ -453,6 +476,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task SignalRHub_WithInvalidUrl_ShouldFailConnection()
     {
         // Arrange
@@ -467,6 +491,7 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
     }
 
     [Fact]
+    [IntegrationTest]
     public async Task GameHub_PlaceCard_ShouldFailWithInvalidGameCode()
     {
         // Arrange

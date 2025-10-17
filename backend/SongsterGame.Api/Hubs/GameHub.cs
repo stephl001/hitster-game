@@ -1,29 +1,37 @@
+using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using SongsterGame.Api.Application.Features.CreateGame;
 using SongsterGame.Api.Services;
 
 namespace SongsterGame.Api.Hubs;
 
-public class GameHub(IGameService gameService, ILogger<GameHub> logger) : Hub
+public class GameHub(
+    IGameService gameService,
+    IMediator mediator,
+    ILogger<GameHub> logger) : Hub
 {
     public async Task<object> CreateGame(string nickname)
     {
         try
         {
-            var game = gameService.CreateGame(Context.ConnectionId, nickname);
-            if (game == null)
+            // Use new Clean Architecture approach with MediatR
+            var command = new CreateGameCommand(Context.ConnectionId, nickname);
+            var result = await mediator.Send(command);
+
+            if (result.IsFailure)
             {
-                return new { success = false, message = "A game already exists" };
+                return new { success = false, message = result.Error.Message };
             }
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, game.GameCode);
+            await Groups.AddToGroupAsync(Context.ConnectionId, result.Value.GameCode);
 
-            logger.LogInformation("Game created: {GameCode} by {Nickname}", game.GameCode, nickname);
+            logger.LogInformation("Game created: {GameCode} by {Nickname}", result.Value.GameCode, nickname);
 
             return new
             {
                 success = true,
-                gameCode = game.GameCode,
-                players = game.Players.Select(p => new { p.Nickname, p.IsHost })
+                gameCode = result.Value.GameCode,
+                players = result.Value.Players.Select(p => new { p.Nickname, p.IsHost })
             };
         }
         catch (Exception ex)

@@ -1,9 +1,12 @@
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using SongsterGame.Api.Application.DTOs.Common;
 using SongsterGame.Api.Application.DTOs.Events;
 using SongsterGame.Api.Application.DTOs.HubResults;
 using SongsterGame.Api.Application.Features.CreateGame;
 using SongsterGame.Api.Application.Features.JoinGame;
+using SongsterGame.Api.Application.Features.PlaceCard;
+using SongsterGame.Api.Application.Features.StartGame;
 using SongsterGame.Api.Services;
 
 namespace SongsterGame.Api.Hubs;
@@ -85,31 +88,26 @@ public class GameHub(
     {
         try
         {
+            // Use new Clean Architecture approach with MediatR
+            var command = new StartGameCommand(gameCode, Context.ConnectionId);
+            var result = await mediator.Send(command);
+
+            if (result.IsFailure)
+            {
+                return new FailureHubResult { Message = result.Error.Message };
+            }
+
+            // Get updated game for current card information
             var game = gameService.GetGame(gameCode);
-            if (game == null)
-            {
-                return new FailureHubResult { Message = "Game not found" };
-            }
 
-            // Verify caller is host
-            var host = game.Players.FirstOrDefault(p => p.IsHost);
-            if (host?.ConnectionId != Context.ConnectionId)
-            {
-                return new FailureHubResult { Message = "Only host can start the game" };
-            }
-
-            var success = gameService.StartGame(gameCode);
-            if (!success)
-            {
-                return new FailureHubResult { Message = "Unable to start game" };
-            }
+            // Create event DTO for SignalR broadcast
+            var gameStartedEvent = new GameStartedEvent(
+                result.Value.CurrentPlayerNickname,
+                game?.CurrentCard
+            );
 
             // Notify all players
-            await Clients.Group(gameCode).SendAsync("GameStarted", new
-            {
-                currentTurn = game.CurrentPlayer?.Nickname,
-                card = game.CurrentCard
-            });
+            await Clients.Group(gameCode).SendAsync("GameStarted", gameStartedEvent);
 
             logger.LogInformation("Game {GameCode} started", gameCode);
 
@@ -126,53 +124,54 @@ public class GameHub(
     {
         try
         {
+            // Use new Clean Architecture approach with MediatR
+            var command = new PlaceCardCommand(gameCode, Context.ConnectionId, position);
+            var result = await mediator.Send(command);
+
+            if (result.IsFailure)
+            {
+                return new FailureHubResult { Message = result.Error.Message };
+            }
+
+            // Get updated game for current card information
             var game = gameService.GetGame(gameCode);
-            if (game == null)
-            {
-                return new FailureHubResult { Message = "Game not found" };
-            }
-
-            var player = game.Players.FirstOrDefault(p => p.ConnectionId == Context.ConnectionId);
-            if (player == null)
-            {
-                return new FailureHubResult { Message = "Player not found" };
-            }
-
-            var isValid = gameService.PlaceCard(gameCode, Context.ConnectionId, position);
 
             // Check if game is finished
-            var winner = gameService.GetWinner(gameCode);
-            if (winner != null)
+            if (result.Value.GameFinished && result.Value.WinnerNickname is not null)
             {
-                await Clients.Group(gameCode).SendAsync("GameWon", new
-                {
-                    winner = winner.Nickname,
-                    timeline = winner.Timeline
-                });
+                // Create event DTO for SignalR broadcast
+                var gameWonEvent = new GameWonEvent(
+                    result.Value.WinnerNickname,
+                    result.Value.PlayerTimeline
+                );
 
-                logger.LogInformation("Game {GameCode} won by {Winner}", gameCode, winner.Nickname);
+                await Clients.Group(gameCode).SendAsync("GameWon", gameWonEvent);
+
+                logger.LogInformation("Game {GameCode} won by {Winner}", gameCode, result.Value.WinnerNickname);
 
                 return new PlaceCardSuccessHubResult
                 {
-                    IsValid = isValid,
+                    IsValid = result.Value.IsValid,
                     GameFinished = true
                 };
             }
 
-            // Notify about card placement
-            await Clients.Group(gameCode).SendAsync("CardPlaced", new
-            {
-                player = player.Nickname,
-                isValid,
+            // Create event DTO for card placement
+            var cardPlacedEvent = new CardPlacedEvent(
+                result.Value.PlayerNickname,
+                result.Value.IsValid,
                 position,
-                timeline = player.Timeline,
-                currentTurn = game.CurrentPlayer?.Nickname,
-                nextCard = game.CurrentCard
-            });
+                result.Value.PlayerTimeline,
+                result.Value.CurrentPlayerNickname,
+                game?.CurrentCard
+            );
+
+            // Notify about card placement
+            await Clients.Group(gameCode).SendAsync("CardPlaced", cardPlacedEvent);
 
             return new PlaceCardSuccessHubResult
             {
-                IsValid = isValid,
+                IsValid = result.Value.IsValid,
                 GameFinished = false
             };
         }

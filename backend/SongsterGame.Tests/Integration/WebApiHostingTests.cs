@@ -443,10 +443,13 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
 
         await connection.StartAsync();
 
-        // Act - Create and start game
+        // Act - Create game and add second player
         var createResult = await connection.InvokeAsync<HubResult>("CreateGame", "Host");
         var createSuccess = Assert.IsType<CreateGameSuccessHubResult>(createResult);
         string gameCode = createSuccess.GameCode;
+        await connection.InvokeAsync<HubResult>("JoinGame", gameCode, "Player2");
+
+        // Act - Start game
         await connection.InvokeAsync<HubResult>("StartGame", gameCode);
 
         // Act - Place card
@@ -513,8 +516,8 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
 
         await connection.StartAsync();
 
-        // Act - Try to place card in non-existent game
-        var result = await connection.InvokeAsync<HubResult>("PlaceCard", "INVALID", 0);
+        // Act - Try to place card in non-existent game (use valid 8-char code that doesn't exist)
+        var result = await connection.InvokeAsync<HubResult>("PlaceCard", "INVALID1", 0);
 
         // Assert
         Assert.NotNull(result);

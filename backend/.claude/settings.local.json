@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet build:*)",
+      "Read(//c/Users/stefs/projects/hitster-game/**)",
+      "Bash(dotnet test:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

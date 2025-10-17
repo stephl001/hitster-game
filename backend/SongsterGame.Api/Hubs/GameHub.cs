@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using SongsterGame.Api.Application.DTOs.Events;
 using SongsterGame.Api.Application.Features.CreateGame;
+using SongsterGame.Api.Application.Features.JoinGame;
 using SongsterGame.Api.Services;
 
 namespace SongsterGame.Api.Hubs;
@@ -45,25 +47,28 @@ public class GameHub(
     {
         try
         {
-            var success = gameService.JoinGame(gameCode, Context.ConnectionId, nickname);
-            if (!success)
-            {
-                return new { success = false, message = "Unable to join game" };
-            }
+            // Use new Clean Architecture approach with MediatR
+            var command = new JoinGameCommand(gameCode, Context.ConnectionId, nickname);
+            var result = await mediator.Send(command);
 
-            var game = gameService.GetGame(gameCode);
-            if (game == null)
+            if (result.IsFailure)
             {
-                return new { success = false, message = "Game not found" };
+                return new { success = false, message = result.Error.Message };
             }
 
             await Groups.AddToGroupAsync(Context.ConnectionId, gameCode);
 
+            // Create event DTO for SignalR broadcast
+            var playerJoinedEvent = new PlayerJoinedEvent(
+                nickname,
+                result.Value.Players
+            );
+
             // Notify all players in the game
             await Clients.Group(gameCode).SendAsync("PlayerJoined", new
             {
-                nickname,
-                players = game.Players.Select(p => new { p.Nickname, p.IsHost })
+                playerJoinedEvent.Nickname,
+                players = playerJoinedEvent.Players.Select(p => new { p.Nickname, p.IsHost })
             });
 
             logger.LogInformation("Player {Nickname} joined game {GameCode}", nickname, gameCode);
@@ -71,7 +76,7 @@ public class GameHub(
             return new
             {
                 success = true,
-                players = game.Players.Select(p => new { p.Nickname, p.IsHost })
+                players = result.Value.Players.Select(p => new { p.Nickname, p.IsHost })
             };
         }
         catch (Exception ex)

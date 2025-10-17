@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.SignalR;
 using SongsterGame.Api.Application.DTOs.Events;
+using SongsterGame.Api.Application.DTOs.HubResults;
 using SongsterGame.Api.Application.Features.CreateGame;
 using SongsterGame.Api.Application.Features.JoinGame;
 using SongsterGame.Api.Services;
@@ -12,7 +13,7 @@ public class GameHub(
     IMediator mediator,
     ILogger<GameHub> logger) : Hub
 {
-    public async Task<object> CreateGame(string nickname)
+    public async Task<HubResult> CreateGame(string nickname)
     {
         try
         {
@@ -22,28 +23,27 @@ public class GameHub(
 
             if (result.IsFailure)
             {
-                return new { success = false, message = result.Error.Message };
+                return new FailureHubResult { Message = result.Error.Message };
             }
 
             await Groups.AddToGroupAsync(Context.ConnectionId, result.Value.GameCode);
 
             logger.LogInformation("Game created: {GameCode} by {Nickname}", result.Value.GameCode, nickname);
 
-            return new
+            return new CreateGameSuccessHubResult
             {
-                success = true,
-                gameCode = result.Value.GameCode,
-                players = result.Value.Players.Select(p => new { p.Nickname, p.IsHost })
+                GameCode = result.Value.GameCode,
+                Players = result.Value.Players
             };
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating game");
-            return new { success = false, message = "Failed to create game" };
+            return new FailureHubResult { Message = "Failed to create game" };
         }
     }
 
-    public async Task<object> JoinGame(string gameCode, string nickname)
+    public async Task<HubResult> JoinGame(string gameCode, string nickname)
     {
         try
         {
@@ -53,7 +53,7 @@ public class GameHub(
 
             if (result.IsFailure)
             {
-                return new { success = false, message = result.Error.Message };
+                return new FailureHubResult { Message = result.Error.Message };
             }
 
             await Groups.AddToGroupAsync(Context.ConnectionId, gameCode);
@@ -65,48 +65,43 @@ public class GameHub(
             );
 
             // Notify all players in the game
-            await Clients.Group(gameCode).SendAsync("PlayerJoined", new
-            {
-                playerJoinedEvent.Nickname,
-                players = playerJoinedEvent.Players.Select(p => new { p.Nickname, p.IsHost })
-            });
+            await Clients.Group(gameCode).SendAsync("PlayerJoined", playerJoinedEvent);
 
             logger.LogInformation("Player {Nickname} joined game {GameCode}", nickname, gameCode);
 
-            return new
+            return new JoinGameSuccessHubResult
             {
-                success = true,
-                players = result.Value.Players.Select(p => new { p.Nickname, p.IsHost })
+                Players = result.Value.Players
             };
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error joining game");
-            return new { success = false, message = "Failed to join game" };
+            return new FailureHubResult { Message = "Failed to join game" };
         }
     }
 
-    public async Task<object> StartGame(string gameCode)
+    public async Task<HubResult> StartGame(string gameCode)
     {
         try
         {
             var game = gameService.GetGame(gameCode);
             if (game == null)
             {
-                return new { success = false, message = "Game not found" };
+                return new FailureHubResult { Message = "Game not found" };
             }
 
             // Verify caller is host
             var host = game.Players.FirstOrDefault(p => p.IsHost);
             if (host?.ConnectionId != Context.ConnectionId)
             {
-                return new { success = false, message = "Only host can start the game" };
+                return new FailureHubResult { Message = "Only host can start the game" };
             }
 
             var success = gameService.StartGame(gameCode);
             if (!success)
             {
-                return new { success = false, message = "Unable to start game" };
+                return new FailureHubResult { Message = "Unable to start game" };
             }
 
             // Notify all players
@@ -118,29 +113,29 @@ public class GameHub(
 
             logger.LogInformation("Game {GameCode} started", gameCode);
 
-            return new { success = true };
+            return new StartGameSuccessHubResult();
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error starting game");
-            return new { success = false, message = "Failed to start game" };
+            return new FailureHubResult { Message = "Failed to start game" };
         }
     }
 
-    public async Task<object> PlaceCard(string gameCode, int position)
+    public async Task<HubResult> PlaceCard(string gameCode, int position)
     {
         try
         {
             var game = gameService.GetGame(gameCode);
             if (game == null)
             {
-                return new { success = false, message = "Game not found" };
+                return new FailureHubResult { Message = "Game not found" };
             }
 
             var player = game.Players.FirstOrDefault(p => p.ConnectionId == Context.ConnectionId);
             if (player == null)
             {
-                return new { success = false, message = "Player not found" };
+                return new FailureHubResult { Message = "Player not found" };
             }
 
             var isValid = gameService.PlaceCard(gameCode, Context.ConnectionId, position);
@@ -157,7 +152,11 @@ public class GameHub(
 
                 logger.LogInformation("Game {GameCode} won by {Winner}", gameCode, winner.Nickname);
 
-                return new { success = true, isValid, gameFinished = true };
+                return new PlaceCardSuccessHubResult
+                {
+                    IsValid = isValid,
+                    GameFinished = true
+                };
             }
 
             // Notify about card placement
@@ -171,12 +170,16 @@ public class GameHub(
                 nextCard = game.CurrentCard
             });
 
-            return new { success = true, isValid };
+            return new PlaceCardSuccessHubResult
+            {
+                IsValid = isValid,
+                GameFinished = false
+            };
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error placing card");
-            return new { success = false, message = "Failed to place card" };
+            return new FailureHubResult { Message = "Failed to place card" };
         }
     }
 

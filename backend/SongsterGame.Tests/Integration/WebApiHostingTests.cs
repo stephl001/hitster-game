@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
+using SongsterGame.Api.Application.DTOs.HubResults;
 using SongsterGame.Api.Services;
 using System.Net;
-using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Xunit.Categories;
@@ -278,13 +278,14 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
         await connection.StartAsync();
 
         // Act
-        var result = await connection.InvokeAsync<JsonObject>("CreateGame", "TestPlayer");
+        var result = await connection.InvokeAsync<HubResult>("CreateGame", "TestPlayer");
 
         // Assert
         Assert.NotNull(result);
-        Assert.True(result["success"]?.GetValue<bool>());
-        Assert.NotNull(result["gameCode"]?.GetValue<string>());
-        Assert.NotEmpty(result["players"]?.AsArray() ?? []);
+        Assert.True(result.Success);
+        var successResult = Assert.IsType<CreateGameSuccessHubResult>(result);
+        Assert.NotNull(successResult.GameCode);
+        Assert.NotEmpty(successResult.Players);
     }
 
     [Fact]
@@ -305,15 +306,16 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
         await connection2.StartAsync();
 
         // Act - Create first game
-        var result1 = await connection1.InvokeAsync<JsonObject>("CreateGame", "Player1");
+        var result1 = await connection1.InvokeAsync<HubResult>("CreateGame", "Player1");
 
         // Act - Try to create second game (should fail in MVP - only one game allowed)
-        var result2 = await connection2.InvokeAsync<JsonObject>("CreateGame", "Player2");
+        var result2 = await connection2.InvokeAsync<HubResult>("CreateGame", "Player2");
 
         // Assert
-        Assert.True(result1["success"]?.GetValue<bool>());
-        Assert.False(result2["success"]?.GetValue<bool>());
-        Assert.Contains("already exists", result2["message"]?.GetValue<string>(), StringComparison.OrdinalIgnoreCase);
+        Assert.True(result1.Success);
+        Assert.False(result2.Success);
+        var failureResult = Assert.IsType<FailureHubResult>(result2);
+        Assert.Contains("already exists", failureResult.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -334,16 +336,18 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
         await playerConnection.StartAsync();
 
         // Act - Create game
-        var createResult = await hostConnection.InvokeAsync<JsonObject>("CreateGame", "Host");
-        string gameCode = createResult["gameCode"]!.GetValue<string>();
+        var createResult = await hostConnection.InvokeAsync<HubResult>("CreateGame", "Host");
+        var createSuccess = Assert.IsType<CreateGameSuccessHubResult>(createResult);
+        string gameCode = createSuccess.GameCode;
 
         // Act - Join game
-        var joinResult = await playerConnection.InvokeAsync<JsonObject>("JoinGame", gameCode, "Player2");
+        var joinResult = await playerConnection.InvokeAsync<HubResult>("JoinGame", gameCode, "Player2");
 
         // Assert
         Assert.NotNull(joinResult);
-        Assert.True(joinResult["success"]?.GetValue<bool>());
-        Assert.Equal(2, (joinResult["players"]?.AsArray() ?? []).Count);
+        Assert.True(joinResult.Success);
+        var joinSuccess = Assert.IsType<JoinGameSuccessHubResult>(joinResult);
+        Assert.Equal(2, joinSuccess.Players.Count);
     }
 
     [Fact]
@@ -359,11 +363,12 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
         await connection.StartAsync();
 
         // Act - Try to join non-existent game
-        var result = await connection.InvokeAsync<JsonObject>("JoinGame", "INVALID", "Player1");
+        var result = await connection.InvokeAsync<HubResult>("JoinGame", "INVALID", "Player1");
 
         // Assert
         Assert.NotNull(result);
-        Assert.False(result["success"]?.GetValue<bool>());
+        Assert.False(result.Success);
+        Assert.IsType<FailureHubResult>(result);
     }
 
     [Fact]
@@ -379,16 +384,18 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
         await connection.StartAsync();
 
         // Act - Create game
-        var createResult = await connection.InvokeAsync<JsonObject>("CreateGame", "Host");
-        string gameCode = createResult["gameCode"]!.GetValue<string>();
-        await connection.InvokeAsync<JsonObject>("JoinGame", gameCode, "Player2");
+        var createResult = await connection.InvokeAsync<HubResult>("CreateGame", "Host");
+        var createSuccess = Assert.IsType<CreateGameSuccessHubResult>(createResult);
+        string gameCode = createSuccess.GameCode;
+        await connection.InvokeAsync<HubResult>("JoinGame", gameCode, "Player2");
 
         // Act - Start game
-        var startResult = await connection.InvokeAsync<JsonObject>("StartGame", gameCode);
+        var startResult = await connection.InvokeAsync<HubResult>("StartGame", gameCode);
 
         // Assert
         Assert.NotNull(startResult);
-        Assert.True(startResult["success"]?.GetValue<bool>());
+        Assert.True(startResult.Success);
+        Assert.IsType<StartGameSuccessHubResult>(startResult);
     }
 
     [Fact]
@@ -409,17 +416,19 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
         await playerConnection.StartAsync();
 
         // Act - Create game and join with second player
-        var createResult = await hostConnection.InvokeAsync<JsonObject>("CreateGame", "Host");
-        string gameCode = createResult["gameCode"]!.GetValue<string>();
-        await playerConnection.InvokeAsync<JsonObject>("JoinGame", gameCode, "Player2");
+        var createResult = await hostConnection.InvokeAsync<HubResult>("CreateGame", "Host");
+        var createSuccess = Assert.IsType<CreateGameSuccessHubResult>(createResult);
+        string gameCode = createSuccess.GameCode;
+        await playerConnection.InvokeAsync<HubResult>("JoinGame", gameCode, "Player2");
 
         // Act - Try to start game from non-host connection
-        var startResult = await playerConnection.InvokeAsync<JsonObject>("StartGame", gameCode);
+        var startResult = await playerConnection.InvokeAsync<HubResult>("StartGame", gameCode);
 
         // Assert
         Assert.NotNull(startResult);
-        Assert.False(startResult["success"]?.GetValue<bool>());
-        Assert.Contains("host", startResult["message"]?.GetValue<string>(), StringComparison.OrdinalIgnoreCase);
+        Assert.False(startResult.Success);
+        var failureResult = Assert.IsType<FailureHubResult>(startResult);
+        Assert.Contains("host", failureResult.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -435,18 +444,20 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
         await connection.StartAsync();
 
         // Act - Create and start game
-        var createResult = await connection.InvokeAsync<JsonObject>("CreateGame", "Host");
-        string gameCode = createResult["gameCode"]!.GetValue<string>();
-        await connection.InvokeAsync<JsonObject>("StartGame", gameCode);
+        var createResult = await connection.InvokeAsync<HubResult>("CreateGame", "Host");
+        var createSuccess = Assert.IsType<CreateGameSuccessHubResult>(createResult);
+        string gameCode = createSuccess.GameCode;
+        await connection.InvokeAsync<HubResult>("StartGame", gameCode);
 
         // Act - Place card
-        var placeResult = await connection.InvokeAsync<JsonObject>("PlaceCard", gameCode, 0);
+        var placeResult = await connection.InvokeAsync<HubResult>("PlaceCard", gameCode, 0);
 
         // Assert
         Assert.NotNull(placeResult);
-        Assert.True(placeResult["success"]?.GetValue<bool>());
-        // isValid may be true or false depending on the card, but should be present
-        Assert.NotNull(placeResult["isValid"]?.GetValue<bool>());
+        Assert.True(placeResult.Success);
+        var placeSuccess = Assert.IsType<PlaceCardSuccessHubResult>(placeResult);
+        // isValid may be true or false depending on the card - we just verify it's returned
+        // (No need to assert on bool value type)
     }
 
     #endregion
@@ -503,12 +514,13 @@ public class WebApiHostingTests(WebApplicationFactory<Program> factory) : IClass
         await connection.StartAsync();
 
         // Act - Try to place card in non-existent game
-        var result = await connection.InvokeAsync<JsonObject>("PlaceCard", "INVALID", 0);
+        var result = await connection.InvokeAsync<HubResult>("PlaceCard", "INVALID", 0);
 
         // Assert
         Assert.NotNull(result);
-        Assert.False(result["success"]?.GetValue<bool>());
-        Assert.Contains("not found", result["message"]?.GetValue<string>(), StringComparison.OrdinalIgnoreCase);
+        Assert.False(result.Success);
+        var failureResult = Assert.IsType<FailureHubResult>(result);
+        Assert.Contains("not found", failureResult.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     #endregion

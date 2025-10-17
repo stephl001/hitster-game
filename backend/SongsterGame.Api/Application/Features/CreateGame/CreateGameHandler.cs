@@ -1,4 +1,4 @@
-using MediatR;
+using SongsterGame.Api.Application.Common;
 using SongsterGame.Api.Application.DTOs.Responses;
 using SongsterGame.Api.Domain.Common;
 using SongsterGame.Api.Domain.ValueObjects;
@@ -9,18 +9,10 @@ namespace SongsterGame.Api.Application.Features.CreateGame;
 /// <summary>
 /// Handler for CreateGameCommand.
 /// </summary>
-public class CreateGameHandler : IRequestHandler<CreateGameCommand, Result<CreateGameResponse>>
+public class CreateGameHandler(IGameService gameService)
+    : SyncRequestHandler<CreateGameCommand, Result<CreateGameResponse>>
 {
-    private readonly IGameService _gameService;
-
-    public CreateGameHandler(IGameService gameService)
-    {
-        _gameService = gameService;
-    }
-
-    public async Task<Result<CreateGameResponse>> Handle(
-        CreateGameCommand request,
-        CancellationToken cancellationToken)
+    protected override Result<CreateGameResponse> HandleCommand(CreateGameCommand request)
     {
         // 1. Parse and validate value objects
         var connectionIdResult = ConnectionId.Create(request.ConnectionId);
@@ -36,7 +28,7 @@ public class CreateGameHandler : IRequestHandler<CreateGameCommand, Result<Creat
         }
 
         // 2. Use existing GameService (will be migrated to repository pattern later)
-        var game = _gameService.CreateGame(
+        var game = gameService.CreateGame(
             connectionIdResult.Value,
             nicknameResult.Value
         );

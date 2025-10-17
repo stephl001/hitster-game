@@ -1,0 +1,1 @@
+- Use primary constructors when possible in C# classes.

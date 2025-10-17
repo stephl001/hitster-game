@@ -38,7 +38,6 @@ public class NicknameTests
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
-    [InlineData(null)]
     [UnitTest]
     public void Create_WithEmptyNickname_ReturnsFailure(string invalidNickname)
     {

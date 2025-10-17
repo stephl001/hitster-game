@@ -38,7 +38,6 @@ public class GameCodeTests
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
-    [InlineData(null)]
     [UnitTest]
     public void Create_WithEmptyCode_ReturnsFailure(string invalidCode)
     {

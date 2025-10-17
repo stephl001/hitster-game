@@ -1,4 +1,4 @@
-using MediatR;
+using SongsterGame.Api.Application.Common;
 using SongsterGame.Api.Application.DTOs.Responses;
 using SongsterGame.Api.Domain.Common;
 using SongsterGame.Api.Domain.ValueObjects;
@@ -10,18 +10,9 @@ namespace SongsterGame.Api.Application.Features.JoinGame;
 /// <summary>
 /// Handler for JoinGameCommand.
 /// </summary>
-public class JoinGameHandler : IRequestHandler<JoinGameCommand, Result<JoinGameResponse>>
+public class JoinGameHandler(IGameService gameService) : SyncRequestHandler<JoinGameCommand, Result<JoinGameResponse>>
 {
-    private readonly IGameService _gameService;
-
-    public JoinGameHandler(IGameService gameService)
-    {
-        _gameService = gameService;
-    }
-
-    public async Task<Result<JoinGameResponse>> Handle(
-        JoinGameCommand request,
-        CancellationToken cancellationToken)
+    protected override Result<JoinGameResponse> HandleCommand(JoinGameCommand request)
     {
         // 1. Parse and validate value objects
         var gameCodeResult = GameCode.Create(request.GameCode);
@@ -43,7 +34,7 @@ public class JoinGameHandler : IRequestHandler<JoinGameCommand, Result<JoinGameR
         }
 
         // 2. Get game from service
-        var game = _gameService.GetGame(gameCodeResult.Value);
+        var game = gameService.GetGame(gameCodeResult.Value);
         if (game is null)
         {
             return Result.Failure<JoinGameResponse>(
@@ -76,7 +67,7 @@ public class JoinGameHandler : IRequestHandler<JoinGameCommand, Result<JoinGameR
         }
 
         // 6. Use existing GameService to join (will be migrated to repository pattern later)
-        var success = _gameService.JoinGame(
+        var success = gameService.JoinGame(
             gameCodeResult.Value,
             connectionIdResult.Value,
             nicknameResult.Value
@@ -90,7 +81,7 @@ public class JoinGameHandler : IRequestHandler<JoinGameCommand, Result<JoinGameR
         }
 
         // 7. Get updated game and map to DTO
-        var updatedGame = _gameService.GetGame(gameCodeResult.Value);
+        var updatedGame = gameService.GetGame(gameCodeResult.Value);
         if (updatedGame is null)
         {
             return Result.Failure<JoinGameResponse>(

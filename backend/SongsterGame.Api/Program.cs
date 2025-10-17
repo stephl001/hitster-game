@@ -1,15 +1,15 @@
+using SongsterGame.Api.Application;
 using SongsterGame.Api.Hubs;
-using SongsterGame.Api.Services;
+using SongsterGame.Api.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddSignalR();
-builder.Services.AddHttpClient();
 
-// Register application services
-builder.Services.AddSingleton<IGameService, GameService>();
-builder.Services.AddSingleton<ISpotifyService, SpotifyService>();
+// Add Clean Architecture layers
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure();
 
 // Configure CORS
 builder.Services.AddCors(options =>

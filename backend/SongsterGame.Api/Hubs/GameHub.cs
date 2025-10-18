@@ -7,6 +7,7 @@ using SongsterGame.Api.Application.Features.CreateGame;
 using SongsterGame.Api.Application.Features.JoinGame;
 using SongsterGame.Api.Application.Features.PlaceCard;
 using SongsterGame.Api.Application.Features.StartGame;
+using SongsterGame.Api.Models;
 using SongsterGame.Api.Services;
 
 namespace SongsterGame.Api.Hubs;
@@ -25,10 +26,8 @@ public class GameHub(
             var result = await mediator.Send(command);
 
             if (result.IsFailure)
-            {
                 return new FailureHubResult { Message = result.Error.Message };
-            }
-
+            
             await Groups.AddToGroupAsync(Context.ConnectionId, result.Value.GameCode);
 
             logger.LogInformation("Game created: {GameCode} by {Nickname}", result.Value.GameCode, nickname);
@@ -55,10 +54,8 @@ public class GameHub(
             var result = await mediator.Send(command);
 
             if (result.IsFailure)
-            {
                 return new FailureHubResult { Message = result.Error.Message };
-            }
-
+            
             await Groups.AddToGroupAsync(Context.ConnectionId, gameCode);
 
             // Create event DTO for SignalR broadcast
@@ -93,10 +90,8 @@ public class GameHub(
             var result = await mediator.Send(command);
 
             if (result.IsFailure)
-            {
                 return new FailureHubResult { Message = result.Error.Message };
-            }
-
+            
             // Get updated game for current card information
             var game = gameService.GetGame(gameCode);
 
@@ -129,10 +124,8 @@ public class GameHub(
             var result = await mediator.Send(command);
 
             if (result.IsFailure)
-            {
                 return new FailureHubResult { Message = result.Error.Message };
-            }
-
+            
             // Get updated game for current card information
             var game = gameService.GetGame(gameCode);
 
@@ -186,22 +179,19 @@ public class GameHub(
     {
         try
         {
-            var game = gameService.GetCurrentGame();
-            if (game != null)
+            Game? game = gameService.GetCurrentGame();
+            Player? player = game?.Players.FirstOrDefault(p => p.ConnectionId == Context.ConnectionId);
+            if (player is not null && game is not null)
             {
-                var player = game.Players.FirstOrDefault(p => p.ConnectionId == Context.ConnectionId);
-                if (player != null)
+                gameService.RemovePlayer(Context.ConnectionId);
+
+                await Clients.Group(game.GameCode).SendAsync("PlayerLeft", new
                 {
-                    gameService.RemovePlayer(Context.ConnectionId);
+                    nickname = player.Nickname,
+                    gameEnded = game.Players.Count == 0 || player.IsHost
+                });
 
-                    await Clients.Group(game.GameCode).SendAsync("PlayerLeft", new
-                    {
-                        nickname = player.Nickname,
-                        gameEnded = game.Players.Count == 0 || player.IsHost
-                    });
-
-                    logger.LogInformation("Player {Nickname} left game {GameCode}", player.Nickname, game.GameCode);
-                }
+                logger.LogInformation("Player {Nickname} left game {GameCode}", player.Nickname, game.GameCode);
             }
         }
         catch (Exception ex)

@@ -77,7 +77,7 @@ public class TestCategorizationValidationTests
             var hasUnitTestAttribute = method.GetCustomAttributes(typeof(UnitTestAttribute), inherit: true).Any();
             var declaringType = method.DeclaringType;
 
-            if (hasUnitTestAttribute && declaringType != null)
+            if (hasUnitTestAttribute && declaringType is not null)
             {
                 var namespaceName = declaringType.Namespace ?? string.Empty;
                 if (!namespaceName.Contains(".Unit") && declaringType.Name != nameof(TestCategorizationValidationTests))
@@ -106,7 +106,7 @@ public class TestCategorizationValidationTests
             var hasIntegrationTestAttribute = method.GetCustomAttributes(typeof(IntegrationTestAttribute), inherit: true).Any();
             var declaringType = method.DeclaringType;
 
-            if (hasIntegrationTestAttribute && declaringType != null)
+            if (hasIntegrationTestAttribute && declaringType is not null)
             {
                 var namespaceName = declaringType.Namespace ?? string.Empty;
                 if (!namespaceName.Contains(".Integration"))

@@ -5,7 +5,7 @@ namespace SongsterGame.Api.Application.Features.CreateGame;
 /// <summary>
 /// Validator for CreateGameCommand.
 /// </summary>
-public class CreateGameCommandValidator : AbstractValidator<CreateGameCommand>
+public sealed class CreateGameCommandValidator : AbstractValidator<CreateGameCommand>
 {
     public CreateGameCommandValidator()
     {

@@ -2,10 +2,9 @@ namespace SongsterGame.Api.Models;
 
 public class MusicCard
 {
-    public string SpotifyId { get; set; } = string.Empty;
-    public string Title { get; set; } = string.Empty;
-    public string Artist { get; set; } = string.Empty;
-    public int Year { get; set; }
-    public string PreviewUrl { get; set; } = string.Empty;
-    public string? AlbumArtUrl { get; set; }
+    public string SpotifyId { get; init; } = string.Empty;
+    public string Title { get; init; } = string.Empty;
+    public string Artist { get; init; } = string.Empty;
+    public required int Year { get; init; }
+    public string PreviewUrl { get; init; } = string.Empty;
 }

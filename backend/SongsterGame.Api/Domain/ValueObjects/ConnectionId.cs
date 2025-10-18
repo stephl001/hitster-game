@@ -17,10 +17,8 @@ public readonly record struct ConnectionId
     public static Result<ConnectionId> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-        {
             return Result.Failure<ConnectionId>(Error.Validation("Connection ID cannot be empty"));
-        }
-
+        
         return Result.Success(new ConnectionId(value.Trim()));
     }
 

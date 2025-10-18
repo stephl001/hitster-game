@@ -20,22 +20,16 @@ public readonly record struct Nickname
     public static Result<Nickname> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-        {
             return Result.Failure<Nickname>(Error.Validation("Nickname cannot be empty"));
-        }
-
+        
         var trimmed = value.Trim();
 
         if (trimmed.Length < MinLength)
-        {
             return Result.Failure<Nickname>(Error.Validation($"Nickname must be at least {MinLength} characters"));
-        }
-
+        
         if (trimmed.Length > MaxLength)
-        {
             return Result.Failure<Nickname>(Error.Validation($"Nickname cannot exceed {MaxLength} characters"));
-        }
-
+        
         return Result.Success(new Nickname(trimmed));
     }
 

@@ -20,23 +20,16 @@ public readonly record struct GameCode
     public static Result<GameCode> Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-        {
             return Result.Failure<GameCode>(Error.Validation("Game code cannot be empty"));
-        }
-
+        
         var trimmed = value.Trim().ToUpperInvariant();
 
         if (trimmed.Length != Length)
-        {
             return Result.Failure<GameCode>(Error.Validation($"Game code must be exactly {Length} characters"));
-        }
-
-        if (!trimmed.All(c => AllowedChars.Contains(c)))
-        {
-            return Result.Failure<GameCode>(Error.Validation("Game code contains invalid characters (only A-Z and 0-9 allowed)"));
-        }
-
-        return Result.Success(new GameCode(trimmed));
+        
+        return !trimmed.All(c => AllowedChars.Contains(c)) 
+            ? Result.Failure<GameCode>(Error.Validation("Game code contains invalid characters (only A-Z and 0-9 allowed)")) 
+            : Result.Success(new GameCode(trimmed));
     }
 
     /// <summary>

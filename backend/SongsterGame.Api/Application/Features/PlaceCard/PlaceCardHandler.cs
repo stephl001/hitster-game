@@ -19,70 +19,40 @@ public class PlaceCardHandler(IGameService gameService)
         // 1. Parse and validate value objects
         var gameCodeResult = GameCode.Create(request.GameCode);
         if (gameCodeResult.IsFailure)
-        {
             return Result.Failure<PlaceCardResponse>(gameCodeResult.Error);
-        }
-
+        
         var connectionIdResult = ConnectionId.Create(request.ConnectionId);
         if (connectionIdResult.IsFailure)
-        {
             return Result.Failure<PlaceCardResponse>(connectionIdResult.Error);
-        }
-
+        
         var positionResult = Position.Create(request.Position);
         if (positionResult.IsFailure)
-        {
             return Result.Failure<PlaceCardResponse>(positionResult.Error);
-        }
-
+        
         // 2. Get game from service
         var game = gameService.GetGame(gameCodeResult.Value);
         if (game is null)
-        {
-            return Result.Failure<PlaceCardResponse>(
-                Error.NotFound($"Game with code '{request.GameCode}' not found.")
-            );
-        }
-
+            return Result.Failure<PlaceCardResponse>(Error.NotFound($"Game with code '{request.GameCode}' not found."));
+        
         // 3. Validate game state
         if (game.State != GameState.Playing)
-        {
-            return Result.Failure<PlaceCardResponse>(
-                Error.BusinessRule("Game is not in playing state.")
-            );
-        }
-
+            return Result.Failure<PlaceCardResponse>(Error.BusinessRule("Game is not in playing state."));
+        
         if (game.CurrentCard is null)
-        {
-            return Result.Failure<PlaceCardResponse>(
-                Error.BusinessRule("No card is currently drawn.")
-            );
-        }
-
+            return Result.Failure<PlaceCardResponse>(Error.BusinessRule("No card is currently drawn."));
+        
         // 4. Verify player exists and it's their turn
         var player = game.Players.FirstOrDefault(p => p.ConnectionId == connectionIdResult.Value);
         if (player is null)
-        {
-            return Result.Failure<PlaceCardResponse>(
-                Error.NotFound("Player not found in game.")
-            );
-        }
-
+            return Result.Failure<PlaceCardResponse>(Error.NotFound("Player not found in game."));
+        
         if (game.CurrentPlayer?.ConnectionId != connectionIdResult.Value)
-        {
-            return Result.Failure<PlaceCardResponse>(
-                Error.BusinessRule("It is not your turn.")
-            );
-        }
-
+            return Result.Failure<PlaceCardResponse>(Error.BusinessRule("It is not your turn."));
+        
         // 5. Validate position is within valid range
         if (positionResult.Value > player.Timeline.Count)
-        {
-            return Result.Failure<PlaceCardResponse>(
-                Error.BusinessRule($"Position {request.Position} is out of range. Timeline length is {player.Timeline.Count}.")
-            );
-        }
-
+            return Result.Failure<PlaceCardResponse>(Error.BusinessRule($"Position {request.Position} is out of range. Timeline length is {player.Timeline.Count}."));
+        
         // 6. Use existing GameService to place card
         var isValid = gameService.PlaceCard(gameCodeResult.Value, connectionIdResult.Value, positionResult.Value);
 
@@ -93,12 +63,8 @@ public class PlaceCardHandler(IGameService gameService)
         // 8. Get updated game state
         var updatedGame = gameService.GetGame(gameCodeResult.Value);
         if (updatedGame is null)
-        {
-            return Result.Failure<PlaceCardResponse>(
-                Error.BusinessRule("Game disappeared after card placement.")
-            );
-        }
-
+            return Result.Failure<PlaceCardResponse>(Error.BusinessRule("Game disappeared after card placement."));
+        
         // 9. Map player timeline to DTOs
         var timelineDtos = player.Timeline
             .Select(c => new MusicCardDto(c.Title, c.Artist, c.Year, c.PreviewUrl))

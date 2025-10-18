@@ -372,3 +372,4 @@ tools to resolve library id and get library docs without me having to explicitly
   - Tag commits with version numbers (v*) to deploy to production
   - Use `hotfix/*` branches only for emergency fixes (rare)
 - Always use 'dotnet add package' command when adding a new nuget package to a project. Do not edit the project yourself. Let the dotnet cli perform the work.
+- If a if statement has no else branch and contains a single statement, do not enclose the statement in curly braces.

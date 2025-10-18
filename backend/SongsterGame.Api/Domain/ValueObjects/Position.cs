@@ -18,12 +18,8 @@ public readonly record struct Position
     public static Result<Position> Create(int value)
     {
         if (value < 0)
-        {
-            return Result.Failure<Position>(
-                Error.Validation("Position cannot be negative")
-            );
-        }
-
+            return Result.Failure<Position>(Error.Validation("Position cannot be negative"));
+        
         return Result.Success(new Position(value));
     }
 

@@ -23,7 +23,7 @@ public class CreateGameHandlerTests
     {
         // Arrange
         var command = new CreateGameCommand("connection-123", "TestPlayer");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =

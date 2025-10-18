@@ -2,10 +2,11 @@ using SongsterGame.Api.Models;
 
 namespace SongsterGame.Api.Services;
 
-public class GameService(ISpotifyService spotifyService) : IGameService
+public class GameService(ISpotifyService spotifyService, TimeProvider timeProvider) : IGameService
 {
     private Game? _currentGame; // MVP: Single game in memory
     private readonly ISpotifyService _spotifyService = spotifyService;
+    private readonly TimeProvider _timeProvider = timeProvider;
     private readonly Random _random = new();
 
     public Game? CreateGame(string hostConnectionId, string hostNickname)
@@ -13,9 +14,9 @@ public class GameService(ISpotifyService spotifyService) : IGameService
         // MVP: Only one game at a time
         if (_currentGame is not null)
             return null; // Game already exists
-        
+
         var gameCode = GenerateGameCode();
-        _currentGame = new Game
+        _currentGame = new Game(_timeProvider)
         {
             GameCode = gameCode,
             Players =

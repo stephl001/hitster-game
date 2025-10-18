@@ -17,7 +17,7 @@ public class GameServiceTests
     {
         // Setup mocks
         _spotifyService = Substitute.For<ISpotifyService>();
-        _gameService = new GameService(_spotifyService);
+        _gameService = new GameService(_spotifyService, TimeProvider.System);
 
         // Setup Bogus fakers for test data
         _faker = new Faker();

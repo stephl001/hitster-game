@@ -13,6 +13,9 @@ public static class DependencyInjection
     /// </summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
+        // Register TimeProvider for testable time access
+        services.AddSingleton(TimeProvider.System);
+
         // Register existing services (will be migrated incrementally)
         services.AddSingleton<IGameService, GameService>();
         services.AddSingleton<ISpotifyService, SpotifyService>();

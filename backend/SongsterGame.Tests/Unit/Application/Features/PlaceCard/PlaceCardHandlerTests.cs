@@ -23,7 +23,7 @@ public class PlaceCardHandlerTests
     {
         // Arrange
         var command = new PlaceCardCommand("ABCD1234", "connection-player1", 0);
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -53,7 +53,7 @@ public class PlaceCardHandlerTests
             }
         };
 
-        var updatedGame = new Game
+        var updatedGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players = mockGame.Players,
@@ -90,7 +90,7 @@ public class PlaceCardHandlerTests
     {
         // Arrange
         var command = new PlaceCardCommand("ABCD1234", "connection-player1", 0);
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -139,7 +139,7 @@ public class PlaceCardHandlerTests
     {
         // Arrange
         var command = new PlaceCardCommand("ABCD1234", "connection-player1", 0);
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -208,7 +208,7 @@ public class PlaceCardHandlerTests
     {
         // Arrange
         var command = new PlaceCardCommand("ABCD1234", "connection-player1", 0);
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -239,7 +239,7 @@ public class PlaceCardHandlerTests
     {
         // Arrange
         var command = new PlaceCardCommand("ABCD1234", "connection-player1", 0);
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -271,7 +271,7 @@ public class PlaceCardHandlerTests
     {
         // Arrange
         var command = new PlaceCardCommand("ABCD1234", "connection-unknown", 0);
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -303,7 +303,7 @@ public class PlaceCardHandlerTests
     {
         // Arrange
         var command = new PlaceCardCommand("ABCD1234", "connection-player2", 0);
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -342,7 +342,7 @@ public class PlaceCardHandlerTests
     {
         // Arrange
         var command = new PlaceCardCommand("ABCD1234", "connection-player1", 5); // Position > timeline length
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -376,7 +376,7 @@ public class PlaceCardHandlerTests
     {
         // Arrange
         var command = new PlaceCardCommand("ABCD1234", "connection-player1", 0);
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =

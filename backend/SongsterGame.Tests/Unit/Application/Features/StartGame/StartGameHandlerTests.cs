@@ -23,7 +23,7 @@ public class StartGameHandlerTests
     {
         // Arrange
         var command = new StartGameCommand("ABCD1234", "connection-host");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -43,7 +43,7 @@ public class StartGameHandlerTests
             ],
             State = GameState.Lobby
         };
-        var startedGame = new Game
+        var startedGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players = mockGame.Players,
@@ -93,7 +93,7 @@ public class StartGameHandlerTests
     {
         // Arrange
         var command = new StartGameCommand("ABCD1234", "connection-host");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -130,7 +130,7 @@ public class StartGameHandlerTests
     {
         // Arrange
         var command = new StartGameCommand("ABCD1234", "connection-player2");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -167,7 +167,7 @@ public class StartGameHandlerTests
     {
         // Arrange
         var command = new StartGameCommand("ABCD1234", "connection-host");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -204,7 +204,7 @@ public class StartGameHandlerTests
     {
         // Arrange
         var command = new StartGameCommand("ABCD1234", "connection-host");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -235,7 +235,7 @@ public class StartGameHandlerTests
     {
         // Arrange
         var command = new StartGameCommand("ABCD1234", "connection-host");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -273,7 +273,7 @@ public class StartGameHandlerTests
     {
         // Arrange
         var command = new StartGameCommand("ABCD1234", "connection-host");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =

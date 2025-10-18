@@ -1,6 +1,6 @@
 namespace SongsterGame.Api.Models;
 
-public class Game
+public class Game(TimeProvider timeProvider)
 {
     public string GameCode { get; set; } = string.Empty;
     public List<Player> Players { get; set; } = [];
@@ -8,7 +8,7 @@ public class Game
     public MusicCard? CurrentCard { get; set; }
     public int CurrentTurnIndex { get; set; }
     public GameState State { get; set; } = GameState.Lobby;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = timeProvider.GetUtcNow().UtcDateTime;
     public const int MaxPlayers = 4;
     public const int WinningTimelineLength = 10;
 

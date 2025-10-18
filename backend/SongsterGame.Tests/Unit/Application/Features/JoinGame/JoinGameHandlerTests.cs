@@ -24,7 +24,7 @@ public class JoinGameHandlerTests
         // Arrange
         var gameCode = "ABCD1234";
         var command = new JoinGameCommand(gameCode, "connection-456", "Player2");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = gameCode,
             Players =
@@ -39,7 +39,7 @@ public class JoinGameHandlerTests
             State = GameState.Lobby
         };
 
-        var updatedGame = new Game
+        var updatedGame = new Game(TimeProvider.System)
         {
             GameCode = gameCode,
             Players =
@@ -98,7 +98,7 @@ public class JoinGameHandlerTests
         // Arrange
         var gameCode = "ABCD1234";
         var command = new JoinGameCommand(gameCode, "connection-456", "Player2");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = gameCode,
             Players =
@@ -131,7 +131,7 @@ public class JoinGameHandlerTests
         // Arrange
         var gameCode = "ABCD1234";
         var command = new JoinGameCommand(gameCode, "connection-456", "Player5");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = gameCode,
             Players =
@@ -163,7 +163,7 @@ public class JoinGameHandlerTests
         // Arrange
         var gameCode = "ABCD1234";
         var command = new JoinGameCommand(gameCode, "connection-456", "Player1"); // Same nickname
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = gameCode,
             Players =
@@ -259,7 +259,7 @@ public class JoinGameHandlerTests
         // Arrange
         var gameCode = "ABCD1234";
         var command = new JoinGameCommand(gameCode, "connection-456", "Player2");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = gameCode,
             Players =
@@ -292,7 +292,7 @@ public class JoinGameHandlerTests
     {
         // Arrange
         var command = new JoinGameCommand("abcd1234", "connection-456", "Player2");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -307,7 +307,7 @@ public class JoinGameHandlerTests
             State = GameState.Lobby
         };
 
-        var updatedGame = new Game
+        var updatedGame = new Game(TimeProvider.System)
         {
             GameCode = "ABCD1234",
             Players =
@@ -336,7 +336,7 @@ public class JoinGameHandlerTests
         // Arrange
         var gameCode = "ABCD1234";
         var command = new JoinGameCommand(gameCode, "connection-456", "  Player2  ");
-        var mockGame = new Game
+        var mockGame = new Game(TimeProvider.System)
         {
             GameCode = gameCode,
             Players =
@@ -351,7 +351,7 @@ public class JoinGameHandlerTests
             State = GameState.Lobby
         };
 
-        var updatedGame = new Game
+        var updatedGame = new Game(TimeProvider.System)
         {
             GameCode = gameCode,
             Players =

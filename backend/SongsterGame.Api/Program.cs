@@ -56,7 +56,7 @@ if (!app.Environment.IsDevelopment())
 app.MapHub<GameHub>("/gameHub");
 
 // Health check endpoint
-app.MapGet("/health", () => new { status = "healthy", timestamp = DateTime.UtcNow });
+app.MapGet("/health", (TimeProvider timeProvider) => new { status = "healthy", timestamp = timeProvider.GetUtcNow().UtcDateTime });
 
 app.Run();
 
